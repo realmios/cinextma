@@ -9,7 +9,7 @@ import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/table";
 import { Chip } from "@heroui/chip";
-import { Trash2, Plus, ExternalLink } from "lucide-react";
+import { Trash2, Plus } from "lucide-react";
 import clsx from "clsx";
 
 type FormState = {
@@ -47,6 +47,10 @@ export default function AdminStreamsPage() {
       setError("TMDB ID và M3U8 URL không được để trống.");
       return;
     }
+    if (!form.label.trim()) {
+      setError("Tên server không được để trống (ví dụ: Vietsub, Thuyết minh).");
+      return;
+    }
 
     setSaving(true);
     setError(null);
@@ -58,20 +62,22 @@ export default function AdminStreamsPage() {
       season: isTV ? parseInt(form.season) : 0,
       episode: isTV ? parseInt(form.episode) : 0,
       m3u8_url: form.m3u8_url.trim(),
-      label: form.label.trim() || null,
+      label: form.label.trim(),
     };
 
-    const { error: upsertError } = await supabase
+    // INSERT thay vì upsert — cho phép nhiều server
+    const { error: insertError } = await supabase
       .from("streams")
-      .upsert(payload, { onConflict: "media_id,type,season,episode" });
+      .insert(payload);
 
     setSaving(false);
 
-    if (upsertError) {
-      setError(upsertError.message);
+    if (insertError) {
+      setError(insertError.message);
     } else {
       setSuccess(true);
-      setForm(defaultForm);
+      // Giữ lại media_id, type, season, episode để thêm server tiếp cho cùng tập
+      setForm((f) => ({ ...f, m3u8_url: "", label: "" }));
       queryClient.invalidateQueries({ queryKey: ["streams-all"] });
       setTimeout(() => setSuccess(false), 3000);
     }
@@ -86,12 +92,12 @@ export default function AdminStreamsPage() {
     <div className="mx-auto max-w-5xl px-4 py-8">
       <h1 className="mb-1 text-2xl font-bold">Quản lý Stream</h1>
       <p className="mb-8 text-sm text-default-500">
-        Nhập TMDB ID và link M3U8 để app dùng stream của bạn thay vì nguồn mặc định.
+        Mỗi phim/tập có thể có nhiều server. Thêm từng server một với tên riêng.
       </p>
 
       {/* Form thêm stream */}
       <div className="mb-8 rounded-2xl border border-divider bg-content1 p-6">
-        <h2 className="mb-4 text-base font-semibold">Thêm / Cập nhật Stream</h2>
+        <h2 className="mb-4 text-base font-semibold">Thêm Server</h2>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input
@@ -132,44 +138,57 @@ export default function AdminStreamsPage() {
           )}
 
           <Input
+            label="Tên Server"
+            placeholder="Vietsub, Thuyết minh, 1080p, Server 2..."
+            value={form.label}
+            onValueChange={(v) => setForm((f) => ({ ...f, label: v }))}
+            description="Tên hiển thị cho người xem khi chọn server"
+          />
+
+          <Input
             label="M3U8 URL"
             placeholder="https://example.com/video.m3u8"
             value={form.m3u8_url}
             onValueChange={(v) => setForm((f) => ({ ...f, m3u8_url: v }))}
-            className={clsx({ "sm:col-span-2": !isTV })}
-          />
-
-          <Input
-            label="Label (tuỳ chọn)"
-            placeholder="Vietsub, Thuyết minh, 1080p..."
-            value={form.label}
-            onValueChange={(v) => setForm((f) => ({ ...f, label: v }))}
           />
         </div>
 
         {error && <p className="mt-3 text-sm text-danger">{error}</p>}
-        {success && <p className="mt-3 text-sm text-success">✓ Đã lưu thành công!</p>}
+        {success && (
+          <p className="mt-3 text-sm text-success">
+            ✓ Đã thêm server! Bạn có thể tiếp tục thêm server khác cho cùng phim/tập.
+          </p>
+        )}
 
-        <Button
-          color="primary"
-          className="mt-4"
-          startContent={<Plus size={16} />}
-          onPress={handleSubmit}
-          isLoading={saving}
-        >
-          Lưu Stream
-        </Button>
+        <div className="mt-4 flex gap-2">
+          <Button
+            color="primary"
+            startContent={<Plus size={16} />}
+            onPress={handleSubmit}
+            isLoading={saving}
+          >
+            Thêm Server
+          </Button>
+          <Button
+            variant="flat"
+            onPress={() => setForm(defaultForm)}
+          >
+            Reset
+          </Button>
+        </div>
       </div>
 
-      {/* Danh sách streams */}
-      <h2 className="mb-3 text-base font-semibold">Danh sách đã nhập ({streams?.length ?? 0})</h2>
+      {/* Danh sách streams — group theo media_id */}
+      <h2 className="mb-3 text-base font-semibold">
+        Danh sách đã nhập ({streams?.length ?? 0} server)
+      </h2>
 
       <Table aria-label="Danh sách streams" removeWrapper>
         <TableHeader>
           <TableColumn>TMDB ID</TableColumn>
           <TableColumn>Loại</TableColumn>
           <TableColumn>Season / Ep</TableColumn>
-          <TableColumn>Label</TableColumn>
+          <TableColumn>Tên Server</TableColumn>
           <TableColumn>URL</TableColumn>
           <TableColumn> </TableColumn>
         </TableHeader>
@@ -193,17 +212,13 @@ export default function AdminStreamsPage() {
               <TableCell>
                 {stream.type === "tv" ? `S${stream.season} E${stream.episode}` : "—"}
               </TableCell>
-              <TableCell>{stream.label ?? "—"}</TableCell>
               <TableCell>
-                <a
-                  href={stream.m3u8_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-sm text-primary hover:underline"
-                >
-                  <span className="max-w-[180px] truncate">{stream.m3u8_url}</span>
-                  <ExternalLink size={12} />
-                </a>
+                <span className="font-medium">{stream.label ?? "—"}</span>
+              </TableCell>
+              <TableCell>
+                <span className="max-w-[200px] truncate text-sm text-default-500 block">
+                  {stream.m3u8_url}
+                </span>
               </TableCell>
               <TableCell>
                 <Button
