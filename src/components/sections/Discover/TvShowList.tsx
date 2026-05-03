@@ -1,52 +1,53 @@
 "use client";
 
 import BackToTopButton from "@/components/ui/button/BackToTopButton";
-import Loop from "@/components/ui/other/Loop";
 import PosterCardSkeleton from "@/components/ui/other/PosterCardSkeleton";
-import useDiscoverFilters from "@/hooks/useDiscoverFilters";
-import useFetchDiscoverTvShows from "@/hooks/useFetchDiscoverTvShow";
-import { DiscoverTvShowsFetchQueryType } from "@/types/movie";
-import { getLoadingLabel } from "@/utils/movies";
-import { Spinner } from "@heroui/react";
-import { useInViewport } from "@mantine/hooks";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { notFound } from "next/navigation";
-import { useEffect } from "react";
+import Loop from "@/components/ui/other/Loop";
+import { createClient } from "@/utils/supabase/client";
+import { tmdb } from "@/api/tmdb";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@heroui/react";
 import TvShowPosterCard from "../TV/Cards/Poster";
+import { TV } from "tmdb-ts/dist/types";
+
+function useStreamTvShows() {
+  const supabase = createClient();
+  return useQuery({
+    queryKey: ["stream-tv-shows"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("streams")
+        .select("media_id")
+        .eq("type", "tv");
+      if (error) throw error;
+      const ids = [...new Set(data?.map((s) => s.media_id) ?? [])] as number[];
+      if (ids.length === 0) return [] as TV[];
+      const results = await Promise.allSettled(ids.map((id) => tmdb.tvShows.details(id)));
+      return results
+        .filter((r) => r.status === "fulfilled")
+        .map((r) => (r as PromiseFulfilledResult<TV>).value);
+    },
+  });
+}
 
 const TvShowDiscoverList = () => {
-  const { ref, inViewport } = useInViewport();
-  const { genresString, queryType } = useDiscoverFilters();
-  const { data, isPending, status, fetchNextPage, isFetchingNextPage, hasNextPage } =
-    useInfiniteQuery({
-      queryKey: ["discover-tv-shows", queryType, genresString],
-      queryFn: ({ pageParam }) =>
-        useFetchDiscoverTvShows({
-          page: pageParam,
-          type: queryType as DiscoverTvShowsFetchQueryType,
-          genres: genresString,
-        }),
-      initialPageParam: 1,
-      getNextPageParam: (lastPage) =>
-        lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
-    });
-
-  useEffect(() => {
-    if (inViewport) {
-      fetchNextPage();
-    }
-  }, [inViewport]);
-
-  if (status === "error") return notFound();
+  const { data: tvShows, isPending, isError } = useStreamTvShows();
 
   if (isPending) {
     return (
-      <div className="flex flex-col items-center justify-center gap-10">
-        <div className="movie-grid">
-          <Loop count={20} prefix="SkeletonDiscoverPosterCard">
-            <PosterCardSkeleton variant="bordered" />
-          </Loop>
-        </div>
+      <div className="movie-grid">
+        <Loop count={20} prefix="SkeletonDiscoverPosterCard">
+          <PosterCardSkeleton variant="bordered" />
+        </Loop>
+      </div>
+    );
+  }
+
+  if (isError || !tvShows || tvShows.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-default-400">
+        <p className="text-4xl mb-3">📺</p>
+        <p>Chưa có TV show nào.</p>
       </div>
     );
   }
@@ -54,21 +55,9 @@ const TvShowDiscoverList = () => {
   return (
     <div className="flex flex-col items-center justify-center gap-10">
       <div className="movie-grid">
-        {data.pages.map((page) => {
-          return page.results.map((tv) => {
-            return <TvShowPosterCard key={tv.id} tv={tv} variant="bordered" />;
-          });
-        })}
-      </div>
-      <div ref={ref} className="flex h-24 items-center justify-center">
-        {isFetchingNextPage && (
-          <Spinner size="lg" variant="wave" color="warning" label={getLoadingLabel()} />
-        )}
-        {!hasNextPage && !isPending && (
-          <p className="text-muted-foreground text-center text-base">
-            You have reached the end of the list.
-          </p>
-        )}
+        {tvShows.map((tv) => (
+          <TvShowPosterCard key={tv.id} tv={tv} variant="bordered" />
+        ))}
       </div>
       <BackToTopButton />
     </div>

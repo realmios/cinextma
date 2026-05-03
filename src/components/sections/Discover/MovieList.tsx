@@ -1,53 +1,53 @@
 "use client";
 
 import BackToTopButton from "@/components/ui/button/BackToTopButton";
-import { Spinner } from "@heroui/react";
-import { useInViewport } from "@mantine/hooks";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { notFound } from "next/navigation";
-import { memo, useEffect } from "react";
-import MoviePosterCard from "../Movie/Cards/Poster";
-import useDiscoverFilters from "@/hooks/useDiscoverFilters";
-import useFetchDiscoverMovies from "@/hooks/useFetchDiscoverMovies";
-import { DiscoverMoviesFetchQueryType } from "@/types/movie";
 import Loop from "@/components/ui/other/Loop";
 import PosterCardSkeleton from "@/components/ui/other/PosterCardSkeleton";
-import { getLoadingLabel } from "@/utils/movies";
+import { createClient } from "@/utils/supabase/client";
+import { tmdb } from "@/api/tmdb";
+import { useQuery } from "@tanstack/react-query";
+import { memo } from "react";
+import MoviePosterCard from "../Movie/Cards/Poster";
+import { Movie } from "tmdb-ts/dist/types";
+
+function useStreamMovies() {
+  const supabase = createClient();
+  return useQuery({
+    queryKey: ["stream-movies"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("streams")
+        .select("media_id")
+        .eq("type", "movie");
+      if (error) throw error;
+      const ids = [...new Set(data?.map((s) => s.media_id) ?? [])] as number[];
+      if (ids.length === 0) return [] as Movie[];
+      const results = await Promise.allSettled(ids.map((id) => tmdb.movies.details(id)));
+      return results
+        .filter((r) => r.status === "fulfilled")
+        .map((r) => (r as PromiseFulfilledResult<Movie>).value);
+    },
+  });
+}
 
 const MovieDiscoverList = () => {
-  const { ref, inViewport } = useInViewport();
-  const { genresString, queryType } = useDiscoverFilters();
-
-  const { data, isPending, status, fetchNextPage, isFetchingNextPage, hasNextPage } =
-    useInfiniteQuery({
-      queryKey: ["discover-movies", queryType, genresString],
-      queryFn: ({ pageParam }) =>
-        useFetchDiscoverMovies({
-          page: pageParam,
-          type: queryType as DiscoverMoviesFetchQueryType,
-          genres: genresString,
-        }),
-      initialPageParam: 1,
-      getNextPageParam: (lastPage) =>
-        lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
-    });
-
-  useEffect(() => {
-    if (inViewport && !isPending) {
-      fetchNextPage();
-    }
-  }, [inViewport]);
-
-  if (status === "error") return notFound();
+  const { data: movies, isPending, isError } = useStreamMovies();
 
   if (isPending) {
     return (
-      <div className="flex flex-col items-center justify-center gap-10">
-        <div className="movie-grid">
-          <Loop count={20} prefix="SkeletonDiscoverPosterCard">
-            <PosterCardSkeleton variant="bordered" />
-          </Loop>
-        </div>
+      <div className="movie-grid">
+        <Loop count={20} prefix="SkeletonDiscoverPosterCard">
+          <PosterCardSkeleton variant="bordered" />
+        </Loop>
+      </div>
+    );
+  }
+
+  if (isError || !movies || movies.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-default-400">
+        <p className="text-4xl mb-3">🎬</p>
+        <p>Chưa có phim nào.</p>
       </div>
     );
   }
@@ -55,19 +55,9 @@ const MovieDiscoverList = () => {
   return (
     <div className="flex flex-col items-center justify-center gap-10">
       <div className="movie-grid">
-        {data.pages.map((page) => {
-          return page.results.map((movie) => {
-            return <MoviePosterCard key={movie.id} movie={movie} variant="bordered" />;
-          });
-        })}
-      </div>
-      <div ref={ref} className="flex h-24 items-center justify-center">
-        {isFetchingNextPage && <Spinner size="lg" variant="wave" label={getLoadingLabel()} />}
-        {!hasNextPage && !isPending && (
-          <p className="text-muted-foreground text-center text-base">
-            You have reached the end of the list.
-          </p>
-        )}
+        {movies.map((movie) => (
+          <MoviePosterCard key={movie.id} movie={movie} variant="bordered" />
+        ))}
       </div>
       <BackToTopButton />
     </div>
