@@ -1,3 +1,5 @@
+"use client";
+
 import { useStream } from "@/hooks/useStream";
 import { ADS_WARNING_STORAGE_KEY, SpacingClasses } from "@/utils/constants";
 import { siteConfig } from "@/config/site";
@@ -28,7 +30,7 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, startAt }) => {
     getInitialValueInEffect: false,
   });
 
-  const { data: stream } = useStream({ mediaId: movie.id, type: "movie" });
+  const { data: stream, isPending: isStreamPending } = useStream({ mediaId: movie.id, type: "movie" });
   const players = getMoviePlayers(movie.id, startAt, stream?.m3u8_url);
   const title = mutateMovieTitle(movie);
   const idle = useIdle(3000);
@@ -44,6 +46,9 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, startAt }) => {
 
   const PLAYER = useMemo(() => players[selectedSource] || players[0], [players, selectedSource]);
 
+  // Chưa có stream nào được nhập
+  const noStream = !isStreamPending && players.length === 0;
+
   return (
     <>
       <AdsWarning />
@@ -57,12 +62,23 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, startAt }) => {
         />
         <Card shadow="md" radius="none" className="relative h-screen">
           <Skeleton className="absolute h-full w-full" />
-          {seen && (
+
+          {/* Chưa có stream */}
+          {noStream && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/90">
+              <p className="text-4xl">🎬</p>
+              <p className="text-lg font-semibold">Chưa có stream cho phim này</p>
+              <p className="text-sm text-default-500">Admin chưa thêm link stream. Vui lòng quay lại sau.</p>
+            </div>
+          )}
+
+          {/* Có stream */}
+          {seen && !noStream && PLAYER && (
             <iframe
               allowFullScreen
               key={PLAYER.title}
               src={PLAYER.source}
-              className={cn("z-10 h-full", { "pointer-events-none": idle && !mobile })}
+              className={cn("z-10 h-full w-full", { "pointer-events-none": idle && !mobile })}
             />
           )}
         </Card>

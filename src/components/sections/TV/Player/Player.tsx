@@ -1,3 +1,6 @@
+"use client";
+
+import { useStream } from "@/hooks/useStream";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/utils/helpers";
 import { getTvShowPlayers } from "@/utils/players";
@@ -10,6 +13,7 @@ import { Episode, TvShowDetails } from "tmdb-ts";
 import useBreakpoints from "@/hooks/useBreakpoints";
 import { ADS_WARNING_STORAGE_KEY, SpacingClasses } from "@/utils/constants";
 import { usePlayerEvents } from "@/hooks/usePlayerEvents";
+
 const AdsWarning = dynamic(() => import("@/components/ui/overlay/AdsWarning"));
 const TvShowPlayerHeader = dynamic(() => import("./Header"));
 const TvShowPlayerSourceSelection = dynamic(() => import("./SourceSelection"));
@@ -41,7 +45,15 @@ const TvShowPlayer: React.FC<TvShowPlayerProps> = ({
   });
 
   const { mobile } = useBreakpoints();
-  const players = getTvShowPlayers(id, episode.season_number, episode.episode_number, startAt);
+
+  const { data: stream, isPending: isStreamPending } = useStream({
+    mediaId: id,
+    type: "tv",
+    season: episode.season_number,
+    episode: episode.episode_number,
+  });
+
+  const players = getTvShowPlayers(id, episode.season_number, episode.episode_number, startAt, stream?.m3u8_url);
   const idle = useIdle(3000);
   const [sourceOpened, sourceHandlers] = useDisclosure(false);
   const [episodeOpened, episodeHandlers] = useDisclosure(false);
@@ -60,6 +72,8 @@ const TvShowPlayer: React.FC<TvShowPlayerProps> = ({
 
   const PLAYER = useMemo(() => players[selectedSource] || players[0], [players, selectedSource]);
 
+  const noStream = !isStreamPending && players.length === 0;
+
   return (
     <>
       <AdsWarning />
@@ -77,12 +91,23 @@ const TvShowPlayer: React.FC<TvShowPlayerProps> = ({
 
         <Card shadow="md" radius="none" className="relative h-screen">
           <Skeleton className="absolute h-full w-full" />
-          {seen && (
+
+          {/* Chưa có stream */}
+          {noStream && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/90">
+              <p className="text-4xl">🎬</p>
+              <p className="text-lg font-semibold">Chưa có stream cho tập này</p>
+              <p className="text-sm text-default-500">Admin chưa thêm link stream. Vui lòng quay lại sau.</p>
+            </div>
+          )}
+
+          {/* Có stream */}
+          {seen && !noStream && PLAYER && (
             <iframe
               allowFullScreen
               key={PLAYER.title}
               src={PLAYER.source}
-              className={cn("z-10 h-full", { "pointer-events-none": idle && !mobile })}
+              className={cn("z-10 h-full w-full", { "pointer-events-none": idle && !mobile })}
             />
           )}
         </Card>
