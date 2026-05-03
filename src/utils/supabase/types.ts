@@ -151,6 +151,42 @@ export type Database = {
         }
         Relationships: []
       }
+      streams: {
+        Row: {
+          id: number
+          media_id: number
+          type: string
+          season: number
+          episode: number
+          m3u8_url: string
+          label: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          media_id: number
+          type: string
+          season?: number
+          episode?: number
+          m3u8_url: string
+          label?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          media_id?: number
+          type?: string
+          season?: number
+          episode?: number
+          m3u8_url?: string
+          label?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
