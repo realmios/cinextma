@@ -107,7 +107,7 @@ function TvStreamList() {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-default-400">
         <p className="text-4xl mb-3">📺</p>
-        <p>Chưa có TV show nào. Vào <strong>/admin/streams</strong> để thêm!</p>
+        <p>Chưa có TV show nào.</p>
       </div>
     );
   }
