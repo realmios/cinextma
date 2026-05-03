@@ -2,8 +2,8 @@ import { PlayersProps } from "@/types";
 
 export const getMoviePlayers = (id: string | number, startAt?: number, streamUrl?: string | null): PlayersProps[] => {
   const custom: PlayersProps[] = streamUrl
-    ? [{ title: "🎬 Stream", source: streamUrl, recommended: true, fast: true, ads: false, resumable: true }]
-    : [];
+  ? [{ title: "🎬 Stream", source: streamUrl as `https://${string}`, recommended: true, fast: true, ads: false, resumable: true }]
+  : [];
 
   return [
     ...custom,
@@ -104,8 +104,8 @@ export const getMoviePlayers = (id: string | number, startAt?: number, streamUrl
 
 export const getTvShowPlayers = (id: string | number, season: number, episode: number, startAt?: number, streamUrl?: string | null): PlayersProps[] => {
   const custom: PlayersProps[] = streamUrl
-    ? [{ title: "🎬 Stream", source: streamUrl, recommended: true, fast: true, ads: false, resumable: true }]
-    : [];
+  ? [{ title: "🎬 Stream", source: streamUrl as `https://${string}`, recommended: true, fast: true, ads: false, resumable: true }]
+  : [];
 
   return [
     ...custom,
