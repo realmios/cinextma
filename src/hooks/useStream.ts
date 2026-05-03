@@ -20,7 +20,7 @@ type UseStreamOptions = {
   episode?: number;
 };
 
-// Hook dùng ở player page để lấy m3u8 URL
+// Hook lấy TẤT CẢ stream (nhiều server) cho 1 phim/tập
 export function useStream({ mediaId, type, season = 0, episode = 0 }: UseStreamOptions) {
   const supabase = createClient();
 
@@ -34,10 +34,10 @@ export function useStream({ mediaId, type, season = 0, episode = 0 }: UseStreamO
         .eq("type", type)
         .eq("season", season)
         .eq("episode", episode)
-        .maybeSingle();
+        .order("id", { ascending: true });
 
       if (error) throw error;
-      return data as Stream | null;
+      return (data ?? []) as Stream[];
     },
   });
 }

@@ -1,31 +1,28 @@
 import { PlayersProps } from "@/types";
+import { Stream } from "@/hooks/useStream";
 
-export const getMoviePlayers = (id: string | number, startAt?: number, streamUrl?: string | null): PlayersProps[] => {
-  if (!streamUrl) return [];
+export const getMoviePlayers = (id: string | number, startAt?: number, streams?: Stream[]): PlayersProps[] => {
+  if (!streams || streams.length === 0) return [];
 
-  return [
-    {
-      title: "🎬 Stream",
-      source: streamUrl as `https://${string}`,
-      recommended: true,
-      fast: true,
-      ads: false,
-      resumable: true,
-    },
-  ];
+  return streams.map((s) => ({
+    title: s.label ?? "🎬 Stream",
+    source: s.m3u8_url as `https://${string}`,
+    recommended: true,
+    fast: true,
+    ads: false,
+    resumable: true,
+  }));
 };
 
-export const getTvShowPlayers = (id: string | number, season: number, episode: number, startAt?: number, streamUrl?: string | null): PlayersProps[] => {
-  if (!streamUrl) return [];
+export const getTvShowPlayers = (id: string | number, season: number, episode: number, startAt?: number, streams?: Stream[]): PlayersProps[] => {
+  if (!streams || streams.length === 0) return [];
 
-  return [
-    {
-      title: "🎬 Stream",
-      source: streamUrl as `https://${string}`,
-      recommended: true,
-      fast: true,
-      ads: false,
-      resumable: true,
-    },
-  ];
+  return streams.map((s) => ({
+    title: s.label ?? "🎬 Stream",
+    source: s.m3u8_url as `https://${string}`,
+    recommended: true,
+    fast: true,
+    ads: false,
+    resumable: true,
+  }));
 };

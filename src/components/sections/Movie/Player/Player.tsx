@@ -30,8 +30,8 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, startAt }) => {
     getInitialValueInEffect: false,
   });
 
-  const { data: stream, isPending: isStreamPending } = useStream({ mediaId: movie.id, type: "movie" });
-  const players = getMoviePlayers(movie.id, startAt, stream?.m3u8_url);
+  const { data: streams, isPending: isStreamPending } = useStream({ mediaId: movie.id, type: "movie" });
+  const players = getMoviePlayers(movie.id, startAt, streams);
   const title = mutateMovieTitle(movie);
   const idle = useIdle(3000);
   const { mobile } = useBreakpoints();
@@ -46,7 +46,6 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, startAt }) => {
 
   const PLAYER = useMemo(() => players[selectedSource] || players[0], [players, selectedSource]);
 
-  // Chưa có stream nào được nhập
   const noStream = !isStreamPending && players.length === 0;
 
   return (
@@ -63,7 +62,6 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, startAt }) => {
         <Card shadow="md" radius="none" className="relative h-screen">
           <Skeleton className="absolute h-full w-full" />
 
-          {/* Chưa có stream */}
           {noStream && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/90">
               <p className="text-4xl">🎬</p>
@@ -72,7 +70,6 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, startAt }) => {
             </div>
           )}
 
-          {/* Có stream */}
           {seen && !noStream && PLAYER && (
             <iframe
               allowFullScreen

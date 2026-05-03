@@ -46,14 +46,14 @@ const TvShowPlayer: React.FC<TvShowPlayerProps> = ({
 
   const { mobile } = useBreakpoints();
 
-  const { data: stream, isPending: isStreamPending } = useStream({
+  const { data: streams, isPending: isStreamPending } = useStream({
     mediaId: id,
     type: "tv",
     season: episode.season_number,
     episode: episode.episode_number,
   });
 
-  const players = getTvShowPlayers(id, episode.season_number, episode.episode_number, startAt, stream?.m3u8_url);
+  const players = getTvShowPlayers(id, episode.season_number, episode.episode_number, startAt, streams);
   const idle = useIdle(3000);
   const [sourceOpened, sourceHandlers] = useDisclosure(false);
   const [episodeOpened, episodeHandlers] = useDisclosure(false);
@@ -92,7 +92,6 @@ const TvShowPlayer: React.FC<TvShowPlayerProps> = ({
         <Card shadow="md" radius="none" className="relative h-screen">
           <Skeleton className="absolute h-full w-full" />
 
-          {/* Chưa có stream */}
           {noStream && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/90">
               <p className="text-4xl">🎬</p>
@@ -101,7 +100,6 @@ const TvShowPlayer: React.FC<TvShowPlayerProps> = ({
             </div>
           )}
 
-          {/* Có stream */}
           {seen && !noStream && PLAYER && (
             <iframe
               allowFullScreen
