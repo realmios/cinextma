@@ -1,12 +1,11 @@
 "use client";
 
 import BackToTopButton from "@/components/ui/button/BackToTopButton";
-import PosterCardSkeleton from "@/components/ui/other/PosterCardSkeleton";
 import Loop from "@/components/ui/other/Loop";
+import PosterCardSkeleton from "@/components/ui/other/PosterCardSkeleton";
 import { createClient } from "@/utils/supabase/client";
 import { tmdb } from "@/api/tmdb";
 import { useQuery } from "@tanstack/react-query";
-import { Skeleton } from "@heroui/react";
 import TvShowPosterCard from "../TV/Cards/Poster";
 import { TV } from "tmdb-ts/dist/types";
 
@@ -23,9 +22,8 @@ function useStreamTvShows() {
       const ids = [...new Set(data?.map((s) => s.media_id) ?? [])] as number[];
       if (ids.length === 0) return [] as TV[];
       const results = await Promise.allSettled(ids.map((id) => tmdb.tvShows.details(id)));
-      return results
-        .filter((r) => r.status === "fulfilled")
-        .map((r) => (r as PromiseFulfilledResult<TV>).value);
+      const fulfilled = results.filter((r) => r.status === "fulfilled") as PromiseFulfilledResult<any>[];
+      return fulfilled.map((r) => r.value) as TV[];
     },
   });
 }
