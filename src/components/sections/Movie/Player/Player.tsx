@@ -1,3 +1,4 @@
+import { useStream } from "@/hooks/useStream";
 import { ADS_WARNING_STORAGE_KEY, SpacingClasses } from "@/utils/constants";
 import { siteConfig } from "@/config/site";
 import useBreakpoints from "@/hooks/useBreakpoints";
@@ -11,6 +12,7 @@ import { parseAsInteger, useQueryState } from "nuqs";
 import { useMemo } from "react";
 import { MovieDetails } from "tmdb-ts/dist/types/movies";
 import { usePlayerEvents } from "@/hooks/usePlayerEvents";
+
 const AdsWarning = dynamic(() => import("@/components/ui/overlay/AdsWarning"));
 const MoviePlayerHeader = dynamic(() => import("./Header"));
 const MoviePlayerSourceSelection = dynamic(() => import("./SourceSelection"));
@@ -26,7 +28,8 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, startAt }) => {
     getInitialValueInEffect: false,
   });
 
-  const players = getMoviePlayers(movie.id, startAt);
+  const { data: stream } = useStream({ mediaId: movie.id, type: "movie" });
+  const players = getMoviePlayers(movie.id, startAt, stream?.m3u8_url);
   const title = mutateMovieTitle(movie);
   const idle = useIdle(3000);
   const { mobile } = useBreakpoints();
