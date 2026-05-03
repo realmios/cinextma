@@ -15,18 +15,22 @@ function useStreamMovies() {
   return useQuery({
     queryKey: ["stream-movies"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("streams")
-        .select("media_id")
-        .eq("type", "movie");
-      if (error) throw error;
-      const ids = [...new Set(data?.map((s) => s.media_id) ?? [])] as number[];
-      if (ids.length === 0) return [] as Movie[];
-      const results = await Promise.allSettled(ids.map((id) => tmdb.movies.details(id)));
-      return results
-        .filter((r) => r.status === "fulfilled")
-        .map((r) => (r as PromiseFulfilledResult<Movie>).value);
-    },
+  const { data, error } = await supabase
+    .from("streams")
+    .select("media_id")
+    .eq("type", "movie");
+  if (error) throw error;
+  const ids = [...new Set(data?.map((s) => s.media_id) ?? [])] as number[];
+  if (ids.length === 0) return [] as Movie[];
+  const results = await Promise.allSettled(ids.map((id) => tmdb.movies.details(id)));
+  const fulfilled = results.filter(
+    (r): r is PromiseFulfilledResult<(typeof r extends PromiseFulfilledResult<infer T> ? T : never)> => r.status === "fulfilled"
+  );
+  return fulfilled.map((r) => ({
+    ...r.value,
+    genre_ids: r.value.genres?.map((g) => g.id) ?? [],
+  })) as unknown as Movie[];
+},
   });
 }
 
