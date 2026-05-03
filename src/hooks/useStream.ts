@@ -42,6 +42,24 @@ export function useStream({ mediaId, type, season = 0, episode = 0 }: UseStreamO
   });
 }
 
+// Hook lấy tất cả media_id có stream theo type — dùng để filter trang chủ
+export function useStreamIds(type: "movie" | "tv") {
+  const supabase = createClient();
+
+  return useQuery({
+    queryKey: ["stream-ids", type],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("streams")
+        .select("media_id")
+        .eq("type", type);
+
+      if (error) throw error;
+      return new Set(data?.map((s) => s.media_id) ?? []);
+    },
+  });
+}
+
 // Hook dùng ở admin page để lấy tất cả streams
 export function useAllStreams() {
   const supabase = createClient();
