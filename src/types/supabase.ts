@@ -152,6 +152,32 @@ export type Database = {
           updated_at?: string;
         };
       };
+      media_metadata: {
+        Row: {
+          id: number;
+          media_id: number;
+          type: "movie" | "tv";
+          title: string | null;
+          overview: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          media_id: number;
+          type: "movie" | "tv";
+          title?: string | null;
+          overview?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          media_id?: number;
+          type?: "movie" | "tv";
+          title?: string | null;
+          overview?: string | null;
+          created_at?: string;
+        };
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
