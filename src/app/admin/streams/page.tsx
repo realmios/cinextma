@@ -147,7 +147,7 @@ function UpdateMetadataForm() {
   }
 
   return (
-    <div className="rounded-2xl border border-warning/40 bg-warning/5 p-6 mb-6">
+    <div className="rounded-2xl border border-divider bg-content1 p-6 mb-6">
       <h2 className="text-base font-semibold mb-1">✏️ Cập nhật tên & mô tả tiếng Việt</h2>
       <p className="text-xs text-default-500 mb-4">Dùng cho các phim đã nhập trước đó chưa có tên tiếng Việt.</p>
 
@@ -156,8 +156,8 @@ function UpdateMetadataForm() {
           <div className="flex gap-2">
             <Input label="TMDB ID" placeholder="Ví dụ: 129" value={mediaId}
               onValueChange={handleMediaIdChange} description="Nhập ID phim cần cập nhật" />
-            <Button isIconOnly className="self-center mt-3" variant="flat" color="warning"
-              isLoading={loading} onPress={() => fetchPreview(mediaId)} title="Tải từ TMDB">
+            <Button isIconOnly className="self-center mt-3" variant="flat" color="default"
+  isLoading={loading} onPress={() => fetchPreview(mediaId)} title="Tải từ TMDB">
               <Search size={16} />
             </Button>
           </div>
