@@ -131,7 +131,7 @@ function UpdateMetadataForm() {
     if (!mediaId || !title) { setError("Cần có ID và tên phim."); return; }
     setSaving(true);
     setError(null);
-    const { error: upsertError } = await supabase.from("media_metadata").upsert({
+      const { error: upsertError } = await (supabase as any).from("media_metadata").upsert({
       media_id: parseInt(mediaId),
       type,
       title: title.trim(),
@@ -254,7 +254,7 @@ function BulkTvForm({ onSaved }: { onSaved: () => void }) {
 
     // Lưu metadata tiếng Việt
     if (title) {
-      await supabase.from("media_metadata").upsert({
+      await (supabase as any).from("media_metadata").upsert({
         media_id: parseInt(mediaId),
         type: "tv",
         title: title.trim(),
@@ -396,7 +396,7 @@ function SingleForm({ onSaved }: { onSaved: () => void }) {
 
     // Lưu metadata tiếng Việt
     if (title) {
-      await supabase.from("media_metadata").upsert({
+      await (supabase as any).from("media_metadata").upsert({
         media_id: parseInt(mediaId),
         type,
         title: title.trim(),
