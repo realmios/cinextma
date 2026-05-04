@@ -5,7 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useAllStreams } from "@/hooks/useStream";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@heroui/button";
-import { Input } from "@heroui/input";
+import { Input, Textarea } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/table";
 import { Chip } from "@heroui/chip";
@@ -20,14 +20,16 @@ type MediaPreview = { title: string; overview: string; poster: string; year: str
 const defaultServer = (): Server => ({ label: "", m3u8_url: "" });
 
 // =====================
-// MEDIA PREVIEW
+// PREVIEW HOOK
 // =====================
-function useMediaPreview(mediaId: string, type: "movie" | "tv") {
+function useMediaPreview(type: "movie" | "tv") {
   const [preview, setPreview] = useState<MediaPreview | null>(null);
+  const [title, setTitle] = useState("");
+  const [overview, setOverview] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function fetchPreview() {
+  async function fetchPreview(mediaId: string) {
     const id = parseInt(mediaId);
     if (!id) { setError("ID không hợp lệ."); return; }
     setLoading(true);
@@ -36,20 +38,26 @@ function useMediaPreview(mediaId: string, type: "movie" | "tv") {
     try {
       if (type === "movie") {
         const data = await tmdb.movies.details(id);
-        setPreview({
+        const p = {
           title: data.title,
           overview: data.overview,
           poster: data.poster_path ? `https://image.tmdb.org/t/p/w200${data.poster_path}` : "",
           year: data.release_date?.slice(0, 4) ?? "",
-        });
+        };
+        setPreview(p);
+        setTitle(data.title);
+        setOverview(data.overview);
       } else {
         const data = await tmdb.tvShows.details(id);
-        setPreview({
+        const p = {
           title: data.name,
           overview: data.overview,
           poster: data.poster_path ? `https://image.tmdb.org/t/p/w200${data.poster_path}` : "",
           year: data.first_air_date?.slice(0, 4) ?? "",
-        });
+        };
+        setPreview(p);
+        setTitle(data.name);
+        setOverview(data.overview);
       }
     } catch {
       setError("Không tìm thấy. Kiểm tra lại ID và loại.");
@@ -57,21 +65,125 @@ function useMediaPreview(mediaId: string, type: "movie" | "tv") {
     setLoading(false);
   }
 
-  function reset() { setPreview(null); setError(null); }
+  function reset() { setPreview(null); setTitle(""); setOverview(""); setError(null); }
 
-  return { preview, loading, error, fetchPreview, reset };
+  return { preview, title, setTitle, overview, setOverview, loading, error, fetchPreview, reset };
 }
 
-function MediaPreviewCard({ preview }: { preview: MediaPreview }) {
+// =====================
+// PREVIEW CARD + EDIT
+// =====================
+function MediaEditSection({
+  preview, title, setTitle, overview, setOverview
+}: {
+  preview: MediaPreview;
+  title: string;
+  setTitle: (v: string) => void;
+  overview: string;
+  setOverview: (v: string) => void;
+}) {
   return (
-    <div className="flex gap-3 rounded-xl border border-success/40 bg-success/10 p-3 mt-2">
-      {preview.poster && (
-        <Image src={preview.poster} alt={preview.title} width={60} className="rounded-lg shrink-0 object-cover" />
-      )}
-      <div className="flex flex-col gap-1">
-        <p className="font-semibold text-sm">{preview.title} <span className="text-default-400 font-normal">({preview.year})</span></p>
-        <p className="text-xs text-default-500 line-clamp-3">{preview.overview}</p>
+    <div className="rounded-xl border border-success/40 bg-success/10 p-3 mt-2 flex flex-col gap-3">
+      <div className="flex gap-3">
+        {preview.poster && (
+          <Image src={preview.poster} alt={title} width={60} className="rounded-lg shrink-0 object-cover" />
+        )}
+        <div className="flex flex-col gap-1 text-xs text-default-400">
+          <p>Năm: {preview.year}</p>
+          <p className="italic">Có thể chỉnh sửa tên và mô tả bên dưới thành tiếng Việt.</p>
+        </div>
       </div>
+      <Input
+        label="Tên phim"
+        size="sm"
+        value={title}
+        onValueChange={setTitle}
+        placeholder="Nhập tên tiếng Việt..."
+      />
+      <Textarea
+        label="Mô tả"
+        size="sm"
+        value={overview}
+        onValueChange={setOverview}
+        placeholder="Nhập mô tả tiếng Việt..."
+        minRows={3}
+      />
+    </div>
+  );
+}
+
+// =====================
+// UPDATE METADATA
+// =====================
+function UpdateMetadataForm() {
+  const supabase = createClient();
+  const [mediaId, setMediaId] = useState("");
+  const [type, setType] = useState<"movie" | "tv">("movie");
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { preview, title, setTitle, overview, setOverview, loading, error: previewError, fetchPreview, reset } = useMediaPreview(type);
+
+  function handleMediaIdChange(v: string) { setMediaId(v); reset(); }
+  function handleTypeChange(keys: any) { setType(Array.from(keys)[0] as "movie" | "tv"); reset(); }
+
+  async function handleSave() {
+    if (!mediaId || !title) { setError("Cần có ID và tên phim."); return; }
+    setSaving(true);
+    setError(null);
+    const { error: upsertError } = await supabase.from("media_metadata").upsert({
+      media_id: parseInt(mediaId),
+      type,
+      title: title.trim(),
+      overview: overview.trim(),
+    }, { onConflict: "media_id,type" });
+    setSaving(false);
+    if (upsertError) { setError(upsertError.message); }
+    else {
+      setSuccess(true);
+      setMediaId(""); reset();
+      setTimeout(() => setSuccess(false), 3000);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-warning/40 bg-warning/5 p-6 mb-6">
+      <h2 className="text-base font-semibold mb-1">✏️ Cập nhật tên & mô tả tiếng Việt</h2>
+      <p className="text-xs text-default-500 mb-4">Dùng cho các phim đã nhập trước đó chưa có tên tiếng Việt.</p>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mb-4">
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Input label="TMDB ID" placeholder="Ví dụ: 129" value={mediaId}
+              onValueChange={handleMediaIdChange} description="Nhập ID phim cần cập nhật" />
+            <Button isIconOnly className="self-center mt-3" variant="flat" color="warning"
+              isLoading={loading} onPress={() => fetchPreview(mediaId)} title="Tải từ TMDB">
+              <Search size={16} />
+            </Button>
+          </div>
+          {previewError && <p className="text-xs text-danger">{previewError}</p>}
+        </div>
+        <Select label="Loại" selectedKeys={[type]} onSelectionChange={handleTypeChange}>
+          <SelectItem key="movie">Movie</SelectItem>
+          <SelectItem key="tv">TV Series</SelectItem>
+        </Select>
+      </div>
+
+      {preview && (
+        <MediaEditSection
+          preview={preview} title={title} setTitle={setTitle}
+          overview={overview} setOverview={setOverview}
+        />
+      )}
+
+      {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+      {success && <p className="mt-3 text-sm text-success">✓ Đã cập nhật!</p>}
+
+      {preview && (
+        <Button color="warning" className="mt-4" onPress={handleSave} isLoading={saving}>
+          Lưu metadata
+        </Button>
+      )}
     </div>
   );
 }
@@ -89,12 +201,9 @@ function BulkTvForm({ onSaved }: { onSaved: () => void }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const { preview, loading: previewLoading, error: previewError, fetchPreview, reset } = useMediaPreview(mediaId, "tv");
+  const { preview, title, setTitle, overview, setOverview, loading, error: previewError, fetchPreview, reset } = useMediaPreview("tv");
 
-  function handleMediaIdChange(v: string) {
-    setMediaId(v);
-    reset();
-  }
+  function handleMediaIdChange(v: string) { setMediaId(v); reset(); }
 
   function generate() {
     const count = parseInt(episodeCount);
@@ -142,6 +251,17 @@ function BulkTvForm({ onSaved }: { onSaved: () => void }) {
     if (rows.length === 0) { setError("Chưa có link nào được nhập."); return; }
     setSaving(true);
     setError(null);
+
+    // Lưu metadata tiếng Việt
+    if (title) {
+      await supabase.from("media_metadata").upsert({
+        media_id: parseInt(mediaId),
+        type: "tv",
+        title: title.trim(),
+        overview: overview.trim(),
+      }, { onConflict: "media_id,type" });
+    }
+
     const { error: insertError } = await supabase.from("streams").insert(rows);
     setSaving(false);
     if (insertError) { setError(insertError.message); }
@@ -166,18 +286,24 @@ function BulkTvForm({ onSaved }: { onSaved: () => void }) {
             <Input label="TMDB ID" placeholder="Ví dụ: 1396" value={mediaId}
               onValueChange={handleMediaIdChange} description="Lấy từ themoviedb.org/tv/..." />
             <Button isIconOnly className="self-center mt-3" variant="flat" color="secondary"
-              isLoading={previewLoading} onPress={fetchPreview} title="Xem trước">
+              isLoading={loading} onPress={() => fetchPreview(mediaId)} title="Xem trước">
               <Search size={16} />
             </Button>
           </div>
-          {preview && <MediaPreviewCard preview={preview} />}
           {previewError && <p className="text-xs text-danger">{previewError}</p>}
         </div>
         <Input label="Season" type="number" value={season} onValueChange={setSeason} />
         <Input label="Số tập" type="number" placeholder="Ví dụ: 10" value={episodeCount} onValueChange={setEpisodeCount} />
       </div>
 
-      <Button color="secondary" variant="flat" onPress={generate} className="mb-4 mt-2">
+      {preview && (
+        <MediaEditSection
+          preview={preview} title={title} setTitle={setTitle}
+          overview={overview} setOverview={setOverview}
+        />
+      )}
+
+      <Button color="secondary" variant="flat" onPress={generate} className="mb-4 mt-4">
         Tạo bảng nhập liệu
       </Button>
 
@@ -241,7 +367,7 @@ function SingleForm({ onSaved }: { onSaved: () => void }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const { preview, loading: previewLoading, error: previewError, fetchPreview, reset } = useMediaPreview(mediaId, type);
+  const { preview, title, setTitle, overview, setOverview, loading, error: previewError, fetchPreview, reset } = useMediaPreview(type);
 
   const isTV = type === "tv";
 
@@ -267,6 +393,17 @@ function SingleForm({ onSaved }: { onSaved: () => void }) {
     if (rows.length === 0) { setError("Nhập ít nhất 1 link."); return; }
     setSaving(true);
     setError(null);
+
+    // Lưu metadata tiếng Việt
+    if (title) {
+      await supabase.from("media_metadata").upsert({
+        media_id: parseInt(mediaId),
+        type,
+        title: title.trim(),
+        overview: overview.trim(),
+      }, { onConflict: "media_id,type" });
+    }
+
     const { error: insertError } = await supabase.from("streams").insert(rows);
     setSaving(false);
     if (insertError) { setError(insertError.message); }
@@ -290,11 +427,10 @@ function SingleForm({ onSaved }: { onSaved: () => void }) {
             <Input label="TMDB ID" placeholder="Ví dụ: 550" value={mediaId}
               onValueChange={handleMediaIdChange} description="Lấy từ themoviedb.org" />
             <Button isIconOnly className="self-center mt-3" variant="flat" color="secondary"
-              isLoading={previewLoading} onPress={fetchPreview} title="Xem trước">
+              isLoading={loading} onPress={() => fetchPreview(mediaId)} title="Xem trước">
               <Search size={16} />
             </Button>
           </div>
-          {preview && <MediaPreviewCard preview={preview} />}
           {previewError && <p className="text-xs text-danger">{previewError}</p>}
         </div>
         <Select label="Loại" selectedKeys={[type]} onSelectionChange={handleTypeChange}>
@@ -309,7 +445,14 @@ function SingleForm({ onSaved }: { onSaved: () => void }) {
         )}
       </div>
 
-      <p className="text-sm font-medium mb-2">Danh sách server:</p>
+      {preview && (
+        <MediaEditSection
+          preview={preview} title={title} setTitle={setTitle}
+          overview={overview} setOverview={setOverview}
+        />
+      )}
+
+      <p className="text-sm font-medium mb-2 mt-4">Danh sách server:</p>
       <div className="flex flex-col gap-2 mb-3">
         {servers.map((srv, i) => (
           <div key={i} className="flex gap-2 items-center">
@@ -360,6 +503,7 @@ export default function AdminStreamsPage() {
       <h1 className="mb-1 text-2xl font-bold">Quản lý Stream</h1>
       <p className="mb-8 text-sm text-default-500">Thêm link m3u8 cho phim và TV show. Mỗi tập có thể có nhiều server.</p>
 
+      <UpdateMetadataForm />
       <BulkTvForm onSaved={invalidate} />
       <SingleForm onSaved={invalidate} />
 
