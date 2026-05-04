@@ -11,6 +11,7 @@ import { useCallback } from "react";
 import { TV } from "tmdb-ts/dist/types";
 import { useLongPress } from "use-long-press";
 import TvShowHoverCard from "./Hover";
+import { useMediaTitle } from "@/hooks/useMediaTitle";
 
 interface TvShowPosterCardProps {
   tv: TV;
@@ -22,7 +23,8 @@ const TvShowPosterCard: React.FC<TvShowPosterCardProps> = ({ tv, variant = "full
   const [opened, handlers] = useDisclosure(false);
   const releaseYear = new Date(tv.first_air_date).getFullYear();
   const posterImage = getImageUrl(tv.poster_path);
-  const title = mutateTvShowTitle(tv);
+  const fallback = mutateTvShowTitle(tv);
+  const title = useMediaTitle(tv.id, "tv", fallback);
   const { mobile } = useBreakpoints();
   const { startVibration } = useDeviceVibration();
 

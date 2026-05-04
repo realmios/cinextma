@@ -11,6 +11,7 @@ import { useCallback } from "react";
 import { Movie } from "tmdb-ts/dist/types";
 import { useLongPress } from "use-long-press";
 import HoverPosterCard from "./Hover";
+import { useMediaTitle } from "@/hooks/useMediaTitle";
 
 interface MoviePosterCardProps {
   movie: Movie;
@@ -22,7 +23,8 @@ const MoviePosterCard: React.FC<MoviePosterCardProps> = ({ movie, variant = "ful
   const [opened, handlers] = useDisclosure(false);
   const releaseYear = new Date(movie.release_date).getFullYear();
   const posterImage = getImageUrl(movie.poster_path);
-  const title = mutateMovieTitle(movie);
+  const fallback = mutateMovieTitle(movie);
+  const title = useMediaTitle(movie.id, "movie", fallback);
   const { mobile } = useBreakpoints();
   const { startVibration } = useDeviceVibration();
 
