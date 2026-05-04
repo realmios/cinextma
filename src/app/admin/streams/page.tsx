@@ -9,12 +9,72 @@ import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/table";
 import { Chip } from "@heroui/chip";
-import { Trash2, Plus, Minus } from "lucide-react";
+import { Trash2, Plus, Minus, Search } from "lucide-react";
+import { tmdb } from "@/api/tmdb";
+import { Image } from "@heroui/react";
 
 type Server = { label: string; m3u8_url: string };
 type EpisodeRow = { episode: number; servers: Server[] };
+type MediaPreview = { title: string; overview: string; poster: string; year: string };
 
 const defaultServer = (): Server => ({ label: "", m3u8_url: "" });
+
+// =====================
+// MEDIA PREVIEW
+// =====================
+function useMediaPreview(mediaId: string, type: "movie" | "tv") {
+  const [preview, setPreview] = useState<MediaPreview | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function fetchPreview() {
+    const id = parseInt(mediaId);
+    if (!id) { setError("ID không hợp lệ."); return; }
+    setLoading(true);
+    setError(null);
+    setPreview(null);
+    try {
+      if (type === "movie") {
+        const data = await tmdb.movies.details(id);
+        setPreview({
+          title: data.title,
+          overview: data.overview,
+          poster: data.poster_path ? `https://image.tmdb.org/t/p/w200${data.poster_path}` : "",
+          year: data.release_date?.slice(0, 4) ?? "",
+        });
+      } else {
+        const data = await tmdb.tvShows.details(id);
+        setPreview({
+          title: data.name,
+          overview: data.overview,
+          poster: data.poster_path ? `https://image.tmdb.org/t/p/w200${data.poster_path}` : "",
+          year: data.first_air_date?.slice(0, 4) ?? "",
+        });
+      }
+    } catch {
+      setError("Không tìm thấy. Kiểm tra lại ID và loại.");
+    }
+    setLoading(false);
+  }
+
+  function reset() { setPreview(null); setError(null); }
+
+  return { preview, loading, error, fetchPreview, reset };
+}
+
+function MediaPreviewCard({ preview }: { preview: MediaPreview }) {
+  return (
+    <div className="flex gap-3 rounded-xl border border-success/40 bg-success/10 p-3 mt-2">
+      {preview.poster && (
+        <Image src={preview.poster} alt={preview.title} width={60} className="rounded-lg shrink-0 object-cover" />
+      )}
+      <div className="flex flex-col gap-1">
+        <p className="font-semibold text-sm">{preview.title} <span className="text-default-400 font-normal">({preview.year})</span></p>
+        <p className="text-xs text-default-500 line-clamp-3">{preview.overview}</p>
+      </div>
+    </div>
+  );
+}
 
 // =====================
 // BULK ADD (TV Series)
@@ -29,6 +89,12 @@ function BulkTvForm({ onSaved }: { onSaved: () => void }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const { preview, loading: previewLoading, error: previewError, fetchPreview, reset } = useMediaPreview(mediaId, "tv");
+
+  function handleMediaIdChange(v: string) {
+    setMediaId(v);
+    reset();
+  }
 
   function generate() {
     const count = parseInt(episodeCount);
@@ -83,6 +149,7 @@ function BulkTvForm({ onSaved }: { onSaved: () => void }) {
       setSuccess(true);
       setGenerated(false); setEpisodes([]);
       setMediaId(""); setSeason("1"); setEpisodeCount("");
+      reset();
       onSaved();
       setTimeout(() => setSuccess(false), 3000);
     }
@@ -93,13 +160,24 @@ function BulkTvForm({ onSaved }: { onSaved: () => void }) {
       <h2 className="text-base font-semibold mb-1">📺 Thêm hàng loạt — TV Series</h2>
       <p className="text-xs text-default-500 mb-4">Nhập số tập để tạo bảng, sau đó điền link cho từng tập và từng server.</p>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-4">
-        <Input label="TMDB ID" placeholder="Ví dụ: 1396" value={mediaId} onValueChange={setMediaId} description="Lấy từ themoviedb.org" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-2">
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Input label="TMDB ID" placeholder="Ví dụ: 1396" value={mediaId}
+              onValueChange={handleMediaIdChange} description="Lấy từ themoviedb.org/tv/..." />
+            <Button isIconOnly className="self-center mt-3" variant="flat" color="secondary"
+              isLoading={previewLoading} onPress={fetchPreview} title="Xem trước">
+              <Search size={16} />
+            </Button>
+          </div>
+          {preview && <MediaPreviewCard preview={preview} />}
+          {previewError && <p className="text-xs text-danger">{previewError}</p>}
+        </div>
         <Input label="Season" type="number" value={season} onValueChange={setSeason} />
         <Input label="Số tập" type="number" placeholder="Ví dụ: 10" value={episodeCount} onValueChange={setEpisodeCount} />
       </div>
 
-      <Button color="secondary" variant="flat" onPress={generate} className="mb-4">
+      <Button color="secondary" variant="flat" onPress={generate} className="mb-4 mt-2">
         Tạo bảng nhập liệu
       </Button>
 
@@ -163,8 +241,12 @@ function SingleForm({ onSaved }: { onSaved: () => void }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const { preview, loading: previewLoading, error: previewError, fetchPreview, reset } = useMediaPreview(mediaId, type);
 
   const isTV = type === "tv";
+
+  function handleMediaIdChange(v: string) { setMediaId(v); reset(); }
+  function handleTypeChange(keys: any) { setType(Array.from(keys)[0] as "movie" | "tv"); reset(); }
 
   function addServer() { setServers((s) => [...s, defaultServer()]); }
   function removeServer(i: number) { setServers((s) => s.filter((_, j) => j !== i)); }
@@ -191,6 +273,7 @@ function SingleForm({ onSaved }: { onSaved: () => void }) {
     else {
       setSuccess(true);
       setServers([defaultServer()]); setMediaId(""); setSeason("0"); setEpisode("0");
+      reset();
       onSaved();
       setTimeout(() => setSuccess(false), 3000);
     }
@@ -202,9 +285,19 @@ function SingleForm({ onSaved }: { onSaved: () => void }) {
       <p className="text-xs text-default-500 mb-4">Dùng để thêm movie hoặc 1 tập TV bất kỳ với nhiều server.</p>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mb-4">
-        <Input label="TMDB ID" placeholder="Ví dụ: 550" value={mediaId} onValueChange={setMediaId} description="Lấy từ themoviedb.org" />
-        <Select label="Loại" selectedKeys={[type]}
-          onSelectionChange={(keys) => setType(Array.from(keys)[0] as "movie" | "tv")}>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Input label="TMDB ID" placeholder="Ví dụ: 550" value={mediaId}
+              onValueChange={handleMediaIdChange} description="Lấy từ themoviedb.org" />
+            <Button isIconOnly className="self-center mt-3" variant="flat" color="secondary"
+              isLoading={previewLoading} onPress={fetchPreview} title="Xem trước">
+              <Search size={16} />
+            </Button>
+          </div>
+          {preview && <MediaPreviewCard preview={preview} />}
+          {previewError && <p className="text-xs text-danger">{previewError}</p>}
+        </div>
+        <Select label="Loại" selectedKeys={[type]} onSelectionChange={handleTypeChange}>
           <SelectItem key="movie">Movie</SelectItem>
           <SelectItem key="tv">TV Series</SelectItem>
         </Select>
@@ -241,7 +334,7 @@ function SingleForm({ onSaved }: { onSaved: () => void }) {
 
       <div className="flex gap-2">
         <Button color="primary" onPress={handleSave} isLoading={saving}>Lưu</Button>
-        <Button variant="flat" onPress={() => { setServers([defaultServer()]); setMediaId(""); }}>Reset</Button>
+        <Button variant="flat" onPress={() => { setServers([defaultServer()]); setMediaId(""); reset(); }}>Reset</Button>
       </div>
     </div>
   );
