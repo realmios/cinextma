@@ -3,6 +3,7 @@
 import { tmdb } from "@/api/tmdb";
 import { ActionResponse } from "@/types";
 import { isEmpty } from "@/utils/helpers";
+import { createClient } from "@/utils/supabase/server";
 
 export type SearchSuggestion = {
   id: number;
@@ -16,72 +17,37 @@ export const getSearchSuggestions = async (
 ): Promise<ActionResponse<SearchSuggestion[] | null>> => {
   try {
     if (isEmpty(query)) {
-      return {
-        success: true,
-        message: "No search suggestions",
-        data: null,
-      };
+      return { success: true, message: "No search suggestions", data: null };
     }
 
-    const [movies, tvShows] = await Promise.all([
-      tmdb.search.movies({ query, page: 1 }),
-      tmdb.search.tvShows({ query, page: 1 }),
-    ]);
+    const supabase = await createClient();
 
-    const movieSuggestions: SearchSuggestion[] = movies.results.map((movie) => ({
-      id: movie.id,
-      title: movie.title,
-      type: "movie",
-    }));
-    const tvSuggestions: SearchSuggestion[] = tvShows.results.map((tv) => ({
-      id: tv.id,
-      title: tv.name,
-      type: "tv",
-    }));
+    // Lấy tất cả media đã upload có metadata
+    const { data, error } = await (supabase as any)
+      .from("media_metadata")
+      .select("media_id, type, title")
+      .ilike("title", `%${query}%`)
+      .limit(limit);
 
-    const suggestions = [...movieSuggestions, ...tvSuggestions];
+    if (error) throw error;
 
-    if (isEmpty(suggestions)) {
-      return {
-        success: true,
-        message: "No search suggestions",
-        data: null,
-      };
+    if (!data || data.length === 0) {
+      return { success: true, message: "No search suggestions", data: null };
     }
 
-    const filteredSuggestions = suggestions
-      .filter((data) => data.title.toLowerCase().includes(query.toLowerCase()))
-      .filter(
-        (data, index, self) =>
-          index === self.findIndex((t) => t.title.toLowerCase() === data.title.toLowerCase()),
-      );
-
-    const sortedSuggestions = filteredSuggestions.sort((a, b) => {
-      const aTitle = a.title.toLowerCase();
-      const bTitle = b.title.toLowerCase();
-      const queryLower = query.toLowerCase();
-
-      const aStartsWith = aTitle.startsWith(queryLower);
-      const bStartsWith = bTitle.startsWith(queryLower);
-
-      if (aStartsWith && !bStartsWith) return -1;
-      if (!aStartsWith && bStartsWith) return 1;
-
-      const aIndex = aTitle.indexOf(queryLower);
-      const bIndex = bTitle.indexOf(queryLower);
-
-      if (aIndex !== bIndex) return aIndex - bIndex;
-      return aTitle.localeCompare(bTitle);
-    });
+    const suggestions: SearchSuggestion[] = data.map((item: any) => ({
+      id: item.media_id,
+      title: item.title,
+      type: item.type,
+    }));
 
     return {
       success: true,
       message: "Search suggestions fetched",
-      data: sortedSuggestions.slice(0, limit),
+      data: suggestions,
     };
   } catch (error) {
     console.error("Search suggestions error:", error);
-
     return {
       success: false,
       message: "Error fetching search suggestions",
