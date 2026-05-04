@@ -19,9 +19,8 @@ const TvShowDiscoverList = () => {
     queryKey: ["discover-tv-shows", queryType, genresString],
     queryFn: async () => {
       if (queryType === "discover") {
-        // @ts-expect-error
-        const res = await tmdb.discover.tvShow({ with_genres: genresString || undefined });
-        return res.results as TV[];
+        const res = await tmdb.discover.tvShow({ with_genres: genresString || undefined }) as { results: TV[] };
+return res.results;
       }
       const { tvShows } = (await import("@/config/site")).siteConfig.queryLists;
       const found = tvShows.find((t) => t.param === queryType);
