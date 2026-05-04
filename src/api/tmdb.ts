@@ -8,4 +8,4 @@ if (isEmpty(token)) {
   throw new Error("TMDB_ACCESS_TOKEN is not defined");
 }
 
-export const tmdb = new TMDB(token);
+export const tmdb = new TMDB(token, "vi-VN");

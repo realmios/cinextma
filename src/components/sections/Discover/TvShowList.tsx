@@ -3,35 +3,40 @@
 import BackToTopButton from "@/components/ui/button/BackToTopButton";
 import Loop from "@/components/ui/other/Loop";
 import PosterCardSkeleton from "@/components/ui/other/PosterCardSkeleton";
-import { createClient } from "@/utils/supabase/client";
+import TvShowPosterCard from "../TV/Cards/Poster";
+import useDiscoverFilters from "@/hooks/useDiscoverFilters";
+import { useStreamIds } from "@/hooks/useStream";
 import { tmdb } from "@/api/tmdb";
 import { useQuery } from "@tanstack/react-query";
-import TvShowPosterCard from "../TV/Cards/Poster";
+import { memo } from "react";
 import { TV } from "tmdb-ts/dist/types";
 
-function useStreamTvShows() {
-  const supabase = createClient();
-  return useQuery({
-    queryKey: ["stream-tv-shows"],
+const TvShowDiscoverList = () => {
+  const { queryType, genresString } = useDiscoverFilters();
+  const { data: streamIds, isPending: isStreamPending } = useStreamIds("tv");
+
+  const { data, isPending, isError } = useQuery({
+    queryKey: ["discover-tv-shows", queryType, genresString],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("streams")
-        .select("media_id")
-        .eq("type", "tv");
-      if (error) throw error;
-      const ids = [...new Set(data?.map((s) => s.media_id) ?? [])] as number[];
-      if (ids.length === 0) return [] as TV[];
-      const results = await Promise.allSettled(ids.map((id) => tmdb.tvShows.details(id)));
-      const fulfilled = results.filter((r) => r.status === "fulfilled") as PromiseFulfilledResult<any>[];
-      return fulfilled.map((r) => r.value) as TV[];
+      if (queryType === "discover") {
+        // @ts-expect-error
+        const res = await tmdb.discover.tvShow({ with_genres: genresString || undefined });
+        return res.results as TV[];
+      }
+      const { tvShows } = (await import("@/config/site")).siteConfig.queryLists;
+      const found = tvShows.find((t) => t.param === queryType);
+      if (!found) return [] as TV[];
+      const res = await found.query();
+      return (res as any).results as TV[];
     },
   });
-}
 
-const TvShowDiscoverList = () => {
-  const { data: tvShows, isPending, isError } = useStreamTvShows();
+  // Filter chỉ giữ TV show có stream
+  const filtered = data?.filter((tv) => streamIds?.has(tv.id)) ?? [];
 
-  if (isPending) {
+  const loading = isPending || isStreamPending;
+
+  if (loading) {
     return (
       <div className="movie-grid">
         <Loop count={20} prefix="SkeletonDiscoverPosterCard">
@@ -41,11 +46,11 @@ const TvShowDiscoverList = () => {
     );
   }
 
-  if (isError || !tvShows || tvShows.length === 0) {
+  if (isError || filtered.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-default-400">
         <p className="text-4xl mb-3">📺</p>
-        <p>Chưa có TV show nào.</p>
+        <p>Không có TV show nào trong mục này.</p>
       </div>
     );
   }
@@ -53,7 +58,7 @@ const TvShowDiscoverList = () => {
   return (
     <div className="flex flex-col items-center justify-center gap-10">
       <div className="movie-grid">
-        {tvShows.map((tv) => (
+        {filtered.map((tv) => (
           <TvShowPosterCard key={tv.id} tv={tv} variant="bordered" />
         ))}
       </div>
@@ -62,4 +67,4 @@ const TvShowDiscoverList = () => {
   );
 };
 
-export default TvShowDiscoverList;
+export default memo(TvShowDiscoverList);

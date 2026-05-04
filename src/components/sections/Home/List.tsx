@@ -5,162 +5,158 @@ import TvShowPosterCard from "@/components/sections/TV/Cards/Poster";
 import SectionTitle from "@/components/ui/other/SectionTitle";
 import Carousel from "@/components/ui/wrapper/Carousel";
 import ContentTypeSelection from "@/components/ui/other/ContentTypeSelection";
-import { createClient } from "@/utils/supabase/client";
-import { tmdb } from "@/api/tmdb";
-import { Skeleton } from "@heroui/react";
+import { useStreamIds } from "@/hooks/useStream";
+import { siteConfig } from "@/config/site";
+import { Link, Skeleton } from "@heroui/react";
+import { useInViewport } from "@mantine/hooks";
 import { useQuery } from "@tanstack/react-query";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { kebabCase } from "string-ts";
 import { Movie } from "tmdb-ts/dist/types";
 import { TV } from "tmdb-ts/dist/types";
+import { Suspense } from "react";
 
-function useStreamMediaIds(type: "movie" | "tv") {
-  const supabase = createClient();
-  return useQuery({
-    queryKey: ["stream-media-ids", type],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("streams")
-        .select("media_id")
-        .eq("type", type);
-      if (error) throw error;
-      return [...new Set(data?.map((s) => s.media_id) ?? [])] as number[];
-    },
+// --- Movie Section ---
+function MovieHomeSection({
+  query,
+  name,
+  param,
+  streamIds,
+}: {
+  query: () => Promise<any>;
+  name: string;
+  param: string;
+  streamIds: Set<number> | undefined;
+}) {
+  const key = kebabCase(name) + "-list";
+  const { ref, inViewport } = useInViewport();
+  const { data, isPending } = useQuery({
+    queryFn: query,
+    queryKey: [key],
+    enabled: inViewport,
   });
-}
 
-function useMoviesByIds(ids: number[]) {
-  return useQuery({
-    queryKey: ["movies-by-ids", ids],
-    queryFn: async () => {
-      const results = await Promise.all(ids.map((id) => tmdb.movies.details(id)));
-      return results as unknown as Movie[];
-    },
-    enabled: ids.length > 0,
-  });
-}
+  const filtered = data?.results.filter((m: Movie) => streamIds?.has(m.id)) ?? [];
 
-function useTvByIds(ids: number[]) {
-  return useQuery({
-    queryKey: ["tv-by-ids", ids],
-    queryFn: async () => {
-      const results = await Promise.all(ids.map((id) => tmdb.tvShows.details(id)));
-      return results as unknown as TV[];
-    },
-    enabled: ids.length > 0,
-  });
-}
-
-// --- Movie List ---
-function MovieStreamList() {
-  const { data: ids, isPending: isIdsPending } = useStreamMediaIds("movie");
-  const hasIds = (ids?.length ?? 0) > 0;
-  const { data: movies, isPending: isMoviesPending } = useMoviesByIds(ids ?? []);
-
-  if (isIdsPending) {
-    return (
-      <div className="flex w-full flex-col gap-5">
-        <Skeleton className="h-7 w-40 rounded-full" />
-        <Skeleton className="h-[250px] rounded-lg md:h-[300px]" />
-      </div>
-    );
-  }
-
-  if (!hasIds) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-default-400">
-        <p className="text-4xl mb-3">🎬</p>
-        <p>Chưa có phim nào.</p>
-      </div>
-    );
-  }
-
-  if (isMoviesPending) {
-    return (
-      <div className="flex w-full flex-col gap-5">
-        <Skeleton className="h-7 w-40 rounded-full" />
-        <Skeleton className="h-[250px] rounded-lg md:h-[300px]" />
-      </div>
-    );
-  }
+  if (!isPending && filtered.length === 0) return null;
 
   return (
-    <section className="min-h-[250px] md:min-h-[300px]">
-      <div className="flex flex-col gap-2">
-        <SectionTitle>Phim có sẵn</SectionTitle>
-        <Carousel>
-          {movies!.map((movie) => (
-            <div key={movie.id} className="embla__slide flex min-h-fit max-w-fit items-center px-1 py-2">
-              <MoviePosterCard movie={movie} />
-            </div>
-          ))}
-        </Carousel>
-      </div>
+    <section id={key} className="min-h-[250px] md:min-h-[300px]" ref={ref}>
+      {isPending ? (
+        <div className="flex w-full flex-col gap-5">
+          <div className="flex grow items-center justify-between">
+            <Skeleton className="h-7 w-40 rounded-full" />
+            <Skeleton className="h-5 w-20 rounded-full" />
+          </div>
+          <Skeleton className="h-[250px] rounded-lg md:h-[300px]" />
+        </div>
+      ) : (
+        <div className="z-3 flex flex-col gap-2">
+          <div className="flex grow items-center justify-between">
+            <SectionTitle>{name}</SectionTitle>
+            <Link size="sm" href={`/discover?type=${param}`} isBlock color="foreground" className="rounded-full">
+              Xem tất cả &gt;
+            </Link>
+          </div>
+          <Carousel>
+            {filtered.map((movie: Movie) => (
+              <div key={movie.id} className="embla__slide flex min-h-fit max-w-fit items-center px-1 py-2">
+                <MoviePosterCard movie={movie} />
+              </div>
+            ))}
+          </Carousel>
+        </div>
+      )}
     </section>
   );
 }
 
-// --- TV List ---
-function TvStreamList() {
-  const { data: ids, isPending: isIdsPending } = useStreamMediaIds("tv");
-  const hasIds = (ids?.length ?? 0) > 0;
-  const { data: tvShows, isPending: isTvPending } = useTvByIds(ids ?? []);
+// --- TV Section ---
+function TvHomeSection({
+  query,
+  name,
+  param,
+  streamIds,
+}: {
+  query: () => Promise<any>;
+  name: string;
+  param: string;
+  streamIds: Set<number> | undefined;
+}) {
+  const key = kebabCase(name) + "-list";
+  const { ref, inViewport } = useInViewport();
+  const { data, isPending } = useQuery({
+    queryFn: query,
+    queryKey: [key],
+    enabled: inViewport,
+  });
 
-  if (isIdsPending) {
-    return (
-      <div className="flex w-full flex-col gap-5">
-        <Skeleton className="h-7 w-40 rounded-full" />
-        <Skeleton className="h-[250px] rounded-lg md:h-[300px]" />
-      </div>
-    );
-  }
+  const filtered = data?.results.filter((tv: TV) => streamIds?.has(tv.id)) ?? [];
 
-  if (!hasIds) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-default-400">
-        <p className="text-4xl mb-3">📺</p>
-        <p>Chưa có TV show nào.</p>
-      </div>
-    );
-  }
-
-  if (isTvPending) {
-    return (
-      <div className="flex w-full flex-col gap-5">
-        <Skeleton className="h-7 w-40 rounded-full" />
-        <Skeleton className="h-[250px] rounded-lg md:h-[300px]" />
-      </div>
-    );
-  }
+  if (!isPending && filtered.length === 0) return null;
 
   return (
-    <section className="min-h-[250px] md:min-h-[300px]">
-      <div className="flex flex-col gap-2">
-        <SectionTitle color="warning">TV Show có sẵn</SectionTitle>
-        <Carousel>
-          {tvShows!.map((tv) => (
-            <div key={tv.id} className="embla__slide flex min-h-fit max-w-fit items-center px-1 py-2">
-              <TvShowPosterCard tv={tv} />
-            </div>
-          ))}
-        </Carousel>
-      </div>
+    <section id={key} className="min-h-[250px] md:min-h-[300px]" ref={ref}>
+      {isPending ? (
+        <div className="flex w-full flex-col gap-5">
+          <div className="flex grow items-center justify-between">
+            <Skeleton className="h-7 w-40 rounded-full" />
+            <Skeleton className="h-5 w-20 rounded-full" />
+          </div>
+          <Skeleton className="h-[250px] rounded-lg md:h-[300px]" />
+        </div>
+      ) : (
+        <div className="z-3 flex flex-col gap-2">
+          <div className="flex grow items-center justify-between">
+            <SectionTitle color="warning">{name}</SectionTitle>
+            <Link size="sm" href={`/discover?type=${param}&content=tv`} isBlock color="foreground" className="rounded-full">
+              Xem tất cả &gt;
+            </Link>
+          </div>
+          <Carousel>
+            {filtered.map((tv: TV) => (
+              <div key={tv.id} className="embla__slide flex min-h-fit max-w-fit items-center px-1 py-2">
+                <TvShowPosterCard tv={tv} />
+              </div>
+            ))}
+          </Carousel>
+        </div>
+      )}
     </section>
   );
 }
 
 // --- Main ---
 const HomePageList: React.FC = () => {
+  const { movies, tvShows } = siteConfig.queryLists;
   const [content] = useQueryState(
     "content",
     parseAsStringLiteral(["movie", "tv"]).withDefault("movie"),
   );
 
+  const { data: movieStreamIds } = useStreamIds("movie");
+  const { data: tvStreamIds } = useStreamIds("tv");
+
   return (
     <div className="flex flex-col gap-12">
       <ContentTypeSelection className="justify-center" />
       <div className="relative flex min-h-32 flex-col gap-12">
-        {content === "movie" && <MovieStreamList />}
-        {content === "tv" && <TvStreamList />}
+        {content === "movie" &&
+          movies.map((movie) => (
+            <MovieHomeSection
+              key={movie.name}
+              {...movie}
+              streamIds={movieStreamIds}
+            />
+          ))}
+        {content === "tv" &&
+          tvShows.map((tv) => (
+            <TvHomeSection
+              key={tv.name}
+              {...tv}
+              streamIds={tvStreamIds}
+            />
+          ))}
       </div>
     </div>
   );

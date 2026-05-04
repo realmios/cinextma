@@ -3,36 +3,40 @@
 import BackToTopButton from "@/components/ui/button/BackToTopButton";
 import Loop from "@/components/ui/other/Loop";
 import PosterCardSkeleton from "@/components/ui/other/PosterCardSkeleton";
-import { createClient } from "@/utils/supabase/client";
+import MoviePosterCard from "../Movie/Cards/Poster";
+import useDiscoverFilters from "@/hooks/useDiscoverFilters";
+import { useStreamIds } from "@/hooks/useStream";
 import { tmdb } from "@/api/tmdb";
 import { useQuery } from "@tanstack/react-query";
 import { memo } from "react";
-import MoviePosterCard from "../Movie/Cards/Poster";
 import { Movie } from "tmdb-ts/dist/types";
 
-function useStreamMovies() {
-  const supabase = createClient();
-  return useQuery({
-    queryKey: ["stream-movies"],
+const MovieDiscoverList = () => {
+  const { queryType, genresString } = useDiscoverFilters();
+  const { data: streamIds, isPending: isStreamPending } = useStreamIds("movie");
+
+  const { data, isPending, isError } = useQuery({
+    queryKey: ["discover-movies", queryType, genresString],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("streams")
-        .select("media_id")
-        .eq("type", "movie");
-      if (error) throw error;
-      const ids = [...new Set(data?.map((s) => s.media_id) ?? [])] as number[];
-      if (ids.length === 0) return [] as Movie[];
-      const results = await Promise.allSettled(ids.map((id) => tmdb.movies.details(id)));
-      const fulfilled = results.filter((r) => r.status === "fulfilled") as PromiseFulfilledResult<any>[];
-      return fulfilled.map((r) => r.value) as Movie[];
+      if (queryType === "discover") {
+        // @ts-expect-error
+        const res = await tmdb.discover.movie({ with_genres: genresString || undefined });
+        return res.results as Movie[];
+      }
+      const { movies, } = (await import("@/config/site")).siteConfig.queryLists;
+      const found = movies.find((m) => m.param === queryType);
+      if (!found) return [] as Movie[];
+      const res = await found.query();
+      return (res as any).results as Movie[];
     },
   });
-}
 
-const MovieDiscoverList = () => {
-  const { data: movies, isPending, isError } = useStreamMovies();
+  // Filter chỉ giữ phim có stream
+  const filtered = data?.filter((m) => streamIds?.has(m.id)) ?? [];
 
-  if (isPending) {
+  const loading = isPending || isStreamPending;
+
+  if (loading) {
     return (
       <div className="movie-grid">
         <Loop count={20} prefix="SkeletonDiscoverPosterCard">
@@ -42,11 +46,11 @@ const MovieDiscoverList = () => {
     );
   }
 
-  if (isError || !movies || movies.length === 0) {
+  if (isError || filtered.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-default-400">
         <p className="text-4xl mb-3">🎬</p>
-        <p>Chưa có phim nào.</p>
+        <p>Không có phim nào trong mục này.</p>
       </div>
     );
   }
@@ -54,7 +58,7 @@ const MovieDiscoverList = () => {
   return (
     <div className="flex flex-col items-center justify-center gap-10">
       <div className="movie-grid">
-        {movies.map((movie) => (
+        {filtered.map((movie) => (
           <MoviePosterCard key={movie.id} movie={movie} variant="bordered" />
         ))}
       </div>

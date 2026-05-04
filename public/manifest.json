@@ -1,7 +1,7 @@
 {
-  "name": "Cinextma",
-  "short_name": "Cinextma",
-  "description": "Your only choice for a free movies and tv shows streaming website.",
+  "name": "Suutamanime",
+  "short_name": "Suutamanime",
+  "description": "Website sưu tầm anime, và phim hoạt hình tuổi thơ miễn phí",
   "theme_color": "#0D0C0F",
   "background_color": "#0D0C0F",
   "start_url": "/",

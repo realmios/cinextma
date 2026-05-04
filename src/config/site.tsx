@@ -14,8 +14,8 @@ import {
 import { TbFolder, TbFolderFilled } from "react-icons/tb";
 
 export const siteConfig: SiteConfigType = {
-  name: "Cinextma",
-  description: "Lựa chọn duy nhất của bạn cho website xem phim và chương trình TV miễn phí.",
+  name: "Suutamanime",
+  description: "Website sưu tầm anime, và phim hoạt hình tuổi thơ miễn phí",
   favicon: "/favicon.ico",
   navItems: [
     {
