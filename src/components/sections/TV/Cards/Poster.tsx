@@ -61,12 +61,7 @@ const TvShowPosterCard: React.FC<TvShowPosterCardProps> = ({ tv, variant = "full
                 />
               )}
               {tv.adult && (
-                <Chip
-                  color="danger"
-                  size="sm"
-                  variant="flat"
-                  className="absolute left-2 top-2 z-20"
-                >
+                <Chip color="danger" size="sm" variant="flat" className="absolute left-2 top-2 z-20">
                   18+
                 </Chip>
               )}
@@ -83,22 +78,15 @@ const TvShowPosterCard: React.FC<TvShowPosterCardProps> = ({ tv, variant = "full
                 src={posterImage}
                 radius="none"
                 className="z-0 aspect-[2/3] h-[250px] object-cover object-center transition group-hover:scale-110 md:h-[300px]"
-                classNames={{
-                  img: "group-hover:opacity-70",
-                }}
+                classNames={{ img: "group-hover:opacity-70" }}
               />
             </div>
           )}
 
           {variant === "bordered" && (
-            <Card
-              isHoverable
-              fullWidth
-              shadow="md"
-              className="group h-full bg-secondary-background"
-            >
-              <CardHeader className="flex items-center justify-center pb-0">
-                <div className="relative size-full">
+            <Card isHoverable fullWidth shadow="md" className="group bg-secondary-background">
+              <CardHeader className="flex items-center justify-center pb-0 p-2">
+                <div className="relative w-full">
                   {hovered && (
                     <Icon
                       icon="line-md:play-filled"
@@ -108,20 +96,18 @@ const TvShowPosterCard: React.FC<TvShowPosterCardProps> = ({ tv, variant = "full
                     />
                   )}
                   {tv.adult && (
-                    <Chip
-                      color="danger"
-                      size="sm"
-                      variant="shadow"
-                      className="absolute left-2 top-2 z-20"
-                    >
+                    <Chip color="danger" size="sm" variant="shadow" className="absolute left-2 top-2 z-20">
                       18+
                     </Chip>
                   )}
-                  <div className="relative overflow-hidden rounded-large">
+                  <div
+                    className="relative overflow-hidden rounded-large w-full"
+                    style={{ aspectRatio: "2/3" }}
+                  >
                     <Image
                       isBlurred
                       alt={title}
-                      className="aspect-[2/3] rounded-lg object-cover object-center group-hover:scale-110"
+                      className="w-full h-full object-cover object-center group-hover:scale-110"
                       src={posterImage}
                     />
                   </div>
