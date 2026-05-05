@@ -15,22 +15,24 @@ import Rating from "@/components/ui/other/Rating";
 import SectionTitle from "@/components/ui/other/SectionTitle";
 import Trailer from "@/components/ui/overlay/Trailer";
 import { SavedMovieDetails } from "@/types/movie";
+import { useMediaInfo } from "@/hooks/useMediaTitle";
 
 export interface TvShowOverviewSectionProps {
   tv: AppendToResponse<TvShowDetails, "videos"[], "tvShow">;
   onViewEpisodesClick: () => void;
 }
 
-export const TvShowOverviewSection: React.FC<TvShowOverviewSectionProps> = ({
-  tv,
-  onViewEpisodesClick,
-}) => {
+export const TvShowOverviewSection: React.FC<TvShowOverviewSectionProps> = ({ tv, onViewEpisodesClick }) => {
   const firstReleaseYear = new Date(tv.first_air_date).getFullYear();
   const lastReleaseYear = new Date(tv.last_air_date).getFullYear();
-  const releaseYears = `${firstReleaseYear} ${firstReleaseYear !== lastReleaseYear ? ` - ${lastReleaseYear}` : ""}`;
+  const releaseYears = `${firstReleaseYear}${firstReleaseYear !== lastReleaseYear ? ` - ${lastReleaseYear}` : ""}`;
   const posterImage = getImageUrl(tv.poster_path);
-  const title = mutateTvShowTitle(tv);
-  const fullTitle = title;
+  const fallbackTitle = mutateTvShowTitle(tv);
+
+  const { data: mediaInfo } = useMediaInfo(tv.id, "tv");
+  const title = mediaInfo?.title ?? fallbackTitle;
+  const overview = mediaInfo?.overview ?? tv.overview;
+
   const bookmarkData: SavedMovieDetails = {
     type: "tv",
     adult: "adult" in tv ? (tv.adult as boolean) : false,
@@ -38,12 +40,12 @@ export const TvShowOverviewSection: React.FC<TvShowOverviewSectionProps> = ({
     id: tv.id,
     poster_path: tv.poster_path,
     release_date: tv.first_air_date,
-    title: fullTitle,
+    title,
     vote_average: tv.vote_average,
     saved_date: new Date().toISOString(),
   };
 
-  useDocumentTitle(`${fullTitle} | ${siteConfig.name}`);
+  useDocumentTitle(`${title} | ${siteConfig.name}`);
 
   return (
     <section id="overview" className="relative z-3 flex flex-col gap-8 pt-[20vh] md:pt-[40vh]">
@@ -51,38 +53,27 @@ export const TvShowOverviewSection: React.FC<TvShowOverviewSectionProps> = ({
         <Image
           isBlurred
           shadow="md"
-          alt={fullTitle}
-          classNames={{
-            wrapper: "w-52 max-h-min aspect-2/3 hidden md:block",
-          }}
+          alt={title}
+          classNames={{ wrapper: "w-52 max-h-min aspect-2/3 hidden md:block" }}
           className="object-cover object-center"
           src={posterImage}
         />
 
         <div className="flex flex-col gap-8">
           <div id="title" className="flex flex-col gap-1 md:gap-2">
-            <Chip
-              color="warning"
-              variant="faded"
-              className="md:text-md text-xs"
-              classNames={{ content: "font-bold" }}
-            >
-              TV
+            <Chip color="warning" variant="faded" className="md:text-md text-xs" classNames={{ content: "font-bold" }}>
+              TV Series
             </Chip>
-            <h2 className="text-2xl font-black md:text-4xl">{fullTitle}</h2>
+            <h2 className="text-2xl font-black md:text-4xl">{title}</h2>
             <div className="md:text-md flex flex-wrap gap-1 text-xs md:gap-2">
               <div className="flex items-center gap-1">
                 <Season />
-                <span>
-                  {tv.number_of_seasons} Season{tv.number_of_seasons > 1 ? "s" : ""}
-                </span>
+                <span>{tv.number_of_seasons} Mùa</span>
               </div>
               <p>&#8226;</p>
               <div className="flex items-center gap-1">
                 <List />
-                <span>
-                  {tv.number_of_episodes} Episode{tv.number_of_episodes > 1 ? "s" : ""}
-                </span>
+                <span>{tv.number_of_episodes} Tập</span>
               </div>
               <p>&#8226;</p>
               <div className="flex items-center gap-1">
@@ -103,7 +94,7 @@ export const TvShowOverviewSection: React.FC<TvShowOverviewSectionProps> = ({
                 onPress={onViewEpisodesClick}
                 startContent={<FaCirclePlay size={22} />}
               >
-                View Episodes
+                Xem tập phim
               </Button>
               <Trailer color="warning" videos={tv.videos.results} />
             </div>
@@ -114,8 +105,8 @@ export const TvShowOverviewSection: React.FC<TvShowOverviewSectionProps> = ({
           </div>
 
           <div id="story" className="flex flex-col gap-2">
-            <SectionTitle color="warning">Story Line</SectionTitle>
-            <p className="text-sm">{tv.overview}</p>
+            <SectionTitle color="warning">Nội dung</SectionTitle>
+            <p className="text-sm">{overview}</p>
           </div>
         </div>
       </div>

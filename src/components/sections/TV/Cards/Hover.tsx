@@ -28,7 +28,7 @@ const TvShowHoverCard: React.FC<{ id: number; fullWidth?: boolean }> = ({ id, fu
   const title = mutateTvShowTitle(tv);
   const firstReleaseYear = new Date(tv.first_air_date).getFullYear();
   const lastReleaseYear = new Date(tv.last_air_date).getFullYear();
-  const releaseYears = `${firstReleaseYear} ${firstReleaseYear !== lastReleaseYear ? ` - ${lastReleaseYear}` : ""}`;
+  const releaseYears = `${firstReleaseYear}${firstReleaseYear !== lastReleaseYear ? ` - ${lastReleaseYear}` : ""}`;
   const fullTitle = title;
   const backdropImage = getImageUrl(tv.backdrop_path, "backdrop");
   const titleImage = getImageUrl(
@@ -48,11 +48,7 @@ const TvShowHoverCard: React.FC<{ id: number; fullWidth?: boolean }> = ({ id, fu
   };
 
   return (
-    <div
-      className={cn("w-80", {
-        "w-full": fullWidth,
-      })}
-    >
+    <div className={cn("w-80", { "w-full": fullWidth })}>
       <div className="relative">
         <div className="absolute aspect-video h-fit w-full">
           <div className="absolute z-2 h-full w-full bg-linear-to-t from-secondary-background from-1%"></div>
@@ -81,21 +77,21 @@ const TvShowHoverCard: React.FC<{ id: number; fullWidth?: boolean }> = ({ id, fu
             className="md:text-md text-xs"
             classNames={{ content: "font-bold" }}
           >
-            TV
+            TV Series
           </Chip>
           <h4 className="text-xl font-bold">{fullTitle}</h4>
           <div className="md:text-md flex flex-wrap gap-1 text-xs md:gap-2">
             <div className="flex items-center gap-1">
               <Season />
               <span>
-                {tv.number_of_seasons} Season{tv.number_of_seasons > 1 ? "s" : ""}
+                {tv.number_of_seasons} Mùa
               </span>
             </div>
             <p>&#8226;</p>
             <div className="flex items-center gap-1">
               <List />
               <span>
-                {tv.number_of_episodes} Episode{tv.number_of_episodes > 1 ? "s" : ""}
+                {tv.number_of_episodes} Tập
               </span>
             </div>
             <p>&#8226;</p>
@@ -116,7 +112,7 @@ const TvShowHoverCard: React.FC<{ id: number; fullWidth?: boolean }> = ({ id, fu
               variant="shadow"
               startContent={<Play size={24} />}
             >
-              View Episodes
+              Xem tập phim
             </Button>
             <BookmarkButton data={bookmarkData} isTooltipDisabled />
           </div>

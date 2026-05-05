@@ -16,6 +16,7 @@ import Trailer from "@/components/ui/overlay/Trailer";
 import { Calendar, Clock } from "@/utils/icons";
 import Link from "next/link";
 import { SavedMovieDetails } from "@/types/movie";
+import { useMediaInfo } from "@/hooks/useMediaTitle";
 
 interface OverviewSectionProps {
   movie: AppendToResponse<MovieDetails, "videos"[], "movie">;
@@ -24,8 +25,12 @@ interface OverviewSectionProps {
 const OverviewSection: React.FC<OverviewSectionProps> = ({ movie }) => {
   const releaseYear = new Date(movie.release_date).getFullYear();
   const posterImage = getImageUrl(movie.poster_path);
-  const title = mutateMovieTitle(movie);
-  const fullTitle = title;
+  const fallbackTitle = mutateMovieTitle(movie);
+
+  const { data: mediaInfo } = useMediaInfo(movie.id, "movie");
+  const title = mediaInfo?.title ?? fallbackTitle;
+  const overview = mediaInfo?.overview ?? movie.overview;
+
   const bookmarkData: SavedMovieDetails = {
     type: "movie",
     adult: movie.adult,
@@ -33,12 +38,12 @@ const OverviewSection: React.FC<OverviewSectionProps> = ({ movie }) => {
     id: movie.id,
     poster_path: movie.poster_path,
     release_date: movie.release_date,
-    title: fullTitle,
+    title,
     vote_average: movie.vote_average,
     saved_date: new Date().toISOString(),
   };
 
-  useDocumentTitle(`${fullTitle} | ${siteConfig.name}`);
+  useDocumentTitle(`${title} | ${siteConfig.name}`);
 
   return (
     <section id="overview" className="relative z-3 flex flex-col gap-8 pt-[20vh] md:pt-[40vh]">
@@ -46,10 +51,8 @@ const OverviewSection: React.FC<OverviewSectionProps> = ({ movie }) => {
         <Image
           isBlurred
           shadow="md"
-          alt={fullTitle}
-          classNames={{
-            wrapper: "w-52 max-h-min aspect-2/3 hidden md:block",
-          }}
+          alt={title}
+          classNames={{ wrapper: "w-52 max-h-min aspect-2/3 hidden md:block" }}
           className="object-cover object-center"
           src={posterImage}
         />
@@ -57,21 +60,12 @@ const OverviewSection: React.FC<OverviewSectionProps> = ({ movie }) => {
         <div className="flex flex-col gap-8">
           <div id="title" className="flex flex-col gap-1 md:gap-2">
             <div className="flex gap-3">
-              <Chip
-                color="primary"
-                variant="faded"
-                className="md:text-md text-xs"
-                classNames={{ content: "font-bold" }}
-              >
-                Movie
+              <Chip color="primary" variant="faded" className="md:text-md text-xs" classNames={{ content: "font-bold" }}>
+                Phim
               </Chip>
-              {movie.adult && (
-                <Chip color="danger" variant="faded">
-                  18+
-                </Chip>
-              )}
+              {movie.adult && <Chip color="danger" variant="faded">18+</Chip>}
             </div>
-            <h2 className="text-2xl font-black md:text-4xl">{fullTitle}</h2>
+            <h2 className="text-2xl font-black md:text-4xl">{title}</h2>
             <div className="md:text-md flex flex-wrap gap-1 text-xs md:gap-2">
               <div className="flex items-center gap-1">
                 <Clock />
@@ -97,7 +91,7 @@ const OverviewSection: React.FC<OverviewSectionProps> = ({ movie }) => {
                 variant="shadow"
                 startContent={<FaCirclePlay size={22} />}
               >
-                Play Now
+                Xem ngay
               </Button>
               <Trailer videos={movie.videos.results} />
             </div>
@@ -108,8 +102,8 @@ const OverviewSection: React.FC<OverviewSectionProps> = ({ movie }) => {
           </div>
 
           <div id="story" className="flex flex-col gap-2">
-            <SectionTitle>Story Line</SectionTitle>
-            <p className="text-sm">{movie.overview}</p>
+            <SectionTitle>Nội dung</SectionTitle>
+            <p className="text-sm">{overview}</p>
           </div>
         </div>
       </div>

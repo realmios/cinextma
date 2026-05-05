@@ -111,83 +111,6 @@ function MediaEditSection({
     </div>
   );
 }
-
-// =====================
-// UPDATE METADATA
-// =====================
-function UpdateMetadataForm() {
-  const supabase = createClient();
-  const [mediaId, setMediaId] = useState("");
-  const [type, setType] = useState<"movie" | "tv">("movie");
-  const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { preview, title, setTitle, overview, setOverview, loading, error: previewError, fetchPreview, reset } = useMediaPreview(type);
-
-  function handleMediaIdChange(v: string) { setMediaId(v); reset(); }
-  function handleTypeChange(keys: any) { setType(Array.from(keys)[0] as "movie" | "tv"); reset(); }
-
-  async function handleSave() {
-    if (!mediaId || !title) { setError("Cần có ID và tên phim."); return; }
-    setSaving(true);
-    setError(null);
-      const { error: upsertError } = await (supabase as any).from("media_metadata").upsert({
-      media_id: parseInt(mediaId),
-      type,
-      title: title.trim(),
-      overview: overview.trim(),
-    }, { onConflict: "media_id,type" });
-    setSaving(false);
-    if (upsertError) { setError(upsertError.message); }
-    else {
-      setSuccess(true);
-      setMediaId(""); reset();
-      setTimeout(() => setSuccess(false), 3000);
-    }
-  }
-
-  return (
-    <div className="rounded-2xl border border-divider bg-content1 p-6 mb-6">
-      <h2 className="text-base font-semibold mb-1">✏️ Cập nhật tên & mô tả tiếng Việt</h2>
-      <p className="text-xs text-default-500 mb-4">Dùng cho các phim đã nhập trước đó chưa có tên tiếng Việt.</p>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mb-4">
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
-            <Input label="TMDB ID" placeholder="Ví dụ: 129" value={mediaId}
-              onValueChange={handleMediaIdChange} description="Nhập ID phim cần cập nhật" />
-            <Button isIconOnly className="self-center mt-3" variant="flat" color="default"
-  isLoading={loading} onPress={() => fetchPreview(mediaId)} title="Tải từ TMDB">
-              <Search size={16} />
-            </Button>
-          </div>
-          {previewError && <p className="text-xs text-danger">{previewError}</p>}
-        </div>
-        <Select label="Loại" selectedKeys={[type]} onSelectionChange={handleTypeChange}>
-          <SelectItem key="movie">Movie</SelectItem>
-          <SelectItem key="tv">TV Series</SelectItem>
-        </Select>
-      </div>
-
-      {preview && (
-        <MediaEditSection
-          preview={preview} title={title} setTitle={setTitle}
-          overview={overview} setOverview={setOverview}
-        />
-      )}
-
-      {error && <p className="mt-3 text-sm text-danger">{error}</p>}
-      {success && <p className="mt-3 text-sm text-success">✓ Đã cập nhật!</p>}
-
-      {preview && (
-        <Button color="warning" className="mt-4" onPress={handleSave} isLoading={saving}>
-          Lưu metadata
-        </Button>
-      )}
-    </div>
-  );
-}
-
 // =====================
 // BULK ADD (TV Series)
 // =====================
@@ -503,7 +426,6 @@ export default function AdminStreamsPage() {
       <h1 className="mb-1 text-2xl font-bold">Quản lý Stream</h1>
       <p className="mb-8 text-sm text-default-500">Thêm link m3u8 cho phim và TV show. Mỗi tập có thể có nhiều server.</p>
 
-      <UpdateMetadataForm />
       <BulkTvForm onSaved={invalidate} />
       <SingleForm onSaved={invalidate} />
 

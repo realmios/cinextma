@@ -49,11 +49,7 @@ const HoverPosterCard: React.FC<{ id: number; fullWidth?: boolean }> = ({ id, fu
 
   return (
     <>
-      <div
-        className={cn("w-80", {
-          "w-full": fullWidth,
-        })}
-      >
+      <div className={cn("w-80", { "w-full": fullWidth })}>
         <div className="relative">
           <div className="absolute aspect-video h-fit w-full">
             <div className="absolute z-2 h-full w-full bg-linear-to-t from-secondary-background from-1%"></div>
@@ -83,7 +79,7 @@ const HoverPosterCard: React.FC<{ id: number; fullWidth?: boolean }> = ({ id, fu
                 className="md:text-md text-xs"
                 classNames={{ content: "font-bold" }}
               >
-                Movie
+                Phim
               </Chip>
               {movie.adult && (
                 <Chip size="sm" color="danger" variant="faded">
@@ -115,7 +111,7 @@ const HoverPosterCard: React.FC<{ id: number; fullWidth?: boolean }> = ({ id, fu
                 variant="shadow"
                 startContent={<Icon icon="solar:play-circle-bold" fontSize={24} />}
               >
-                Play Now
+                Xem ngay
               </Button>
               <BookmarkButton data={bookmarkData} isTooltipDisabled />
             </div>
