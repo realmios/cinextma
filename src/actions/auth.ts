@@ -15,23 +15,8 @@ import {
 import { z } from "zod";
 import { ActionResponse } from "@/types";
 
-/**
- * A generic type for our authentication actions.
- * @template T The type of the form data.
- * @param data The validated form data.
- * @param supabase The Supabase client instance.
- * @returns An ActionResponse.
- */
 type AuthAction<T> = (data: T, supabase: SupabaseClient) => ActionResponse;
 
-/**
- * A higher-order function to create a server action that handles
- * form validation, captcha checks, and Supabase client creation.
- * @template T The type of the form data, which must include an optional captchaToken.
- * @param schema The Zod schema for validation.
- * @param action The core logic of the server action.
- * @returns An async function that serves as the server action.
- */
 const createAuthAction = <T extends { captchaToken?: string }>(
   schema: z.ZodSchema<T>,
   action: AuthAction<T>,
@@ -44,15 +29,10 @@ const createAuthAction = <T extends { captchaToken?: string }>(
       return { success: false, message };
     }
 
-    if (!result.data.captchaToken) {
-      return { success: false, message: "Captcha is required." };
-    }
-
     try {
       const supabase = await createClient(admin);
       return await action(result.data, supabase);
     } catch (error) {
-      // Catch potential unhandled errors in actions
       if (error instanceof Error) {
         return { success: false, message: error.message };
       }
@@ -65,9 +45,6 @@ const signInWithEmailAction: AuthAction<LoginFormInput> = async (data, supabase)
   const { data: user, error } = await supabase.auth.signInWithPassword({
     email: data.email,
     password: data.loginPassword,
-    options: {
-      captchaToken: data.captchaToken,
-    },
   });
 
   if (error) return { success: false, message: error.message };
@@ -90,7 +67,6 @@ const signInWithEmailAction: AuthAction<LoginFormInput> = async (data, supabase)
 };
 
 const signUpAction: AuthAction<RegisterFormInput> = async (data, supabase) => {
-  // Check username availability
   const { data: usernameExists, error: usernameError } = await supabase
     .from("profiles")
     .select("id")
@@ -106,34 +82,26 @@ const signUpAction: AuthAction<RegisterFormInput> = async (data, supabase) => {
     return { success: false, message: "Username already taken." };
   }
 
-  // Create user
   const { data: authData, error: signUpError } = await supabase.auth.signUp({
     email: data.email,
     password: data.password,
-    options: {
-      captchaToken: data.captchaToken,
-    },
   });
 
   if (signUpError) return { success: false, message: signUpError.message };
   if (!authData.user) return { success: false, message: "User not created. Please try again." };
 
-  // Insert profile
   const { error: profileError } = await supabase
     .from("profiles")
     .insert({ id: authData.user.id, username: data.username });
 
   if (profileError) {
     console.error("Profile creation error:", profileError);
-    // This is a critical error. The user exists in auth but not in profiles.
-    // It's better to return a generic error and log it for investigation.
     return { success: false, message: "Could not create user profile. Please contact support." };
   }
 
   return {
     success: true,
-    message:
-      "Sign up successful. Please check your email for verification. Check spam folder if you don't see it.",
+    message: "Đăng ký thành công! Hãy đăng nhập để tiếp tục.",
   };
 };
 
@@ -141,15 +109,13 @@ const sendResetPasswordEmailAction: AuthAction<ForgotPasswordFormInput> = async 
   data,
   supabase,
 ) => {
-  const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-    captchaToken: data.captchaToken,
-  });
+  const { error } = await supabase.auth.resetPasswordForEmail(data.email);
 
   if (error) return { success: false, message: error.message };
 
   return {
     success: true,
-    message: `We have sent an email to ${data.email}. Check spam folder if you don't see it.`,
+    message: `Chúng tôi đã gửi email đến ${data.email}. Kiểm tra thư mục spam nếu không thấy.`,
   };
 };
 
@@ -160,7 +126,7 @@ const resetPasswordAction: AuthAction<ResetPasswordFormInput> = async (data, sup
 
   if (error) return { success: false, message: error.message };
 
-  return { success: true, message: "Password has been reset successfully." };
+  return { success: true, message: "Mật khẩu đã được đặt lại thành công." };
 };
 
 export const signIn = createAuthAction(LoginFormSchema, signInWithEmailAction);
@@ -177,5 +143,5 @@ export const signOut = async (): ActionResponse => {
 
   if (error) return { success: false, message: error.message };
 
-  return { success: true, message: "You have been signed out." };
+  return { success: true, message: "Bạn đã đăng xuất thành công." };
 };
