@@ -15,25 +15,6 @@ import { getSearchSuggestions } from "@/actions/search";
 import SearchInput from "../input/SearchInput";
 import { ArrowUpLeft, Close, History, Movie, TV } from "@/utils/icons";
 import { Button, Listbox, ListboxItem } from "@heroui/react";
-import { useD
-@'
-"use client";
-
-import BackButton from "@/components/ui/button/BackButton";
-import { siteConfig } from "@/config/site";
-import { cn } from "@/utils/helpers";
-import { Navbar, NavbarBrand, NavbarContent, NavbarItem } from "@heroui/react";
-import { useWindowScroll } from "@mantine/hooks";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import FullscreenToggleButton from "../button/FullscreenToggleButton";
-import UserProfileButton from "../button/UserProfileButton";
-import ThemeSwitchDropdown from "../input/ThemeSwitchDropdown";
-import BrandLogo from "../other/BrandLogo";
-import { getSearchSuggestions } from "@/actions/search";
-import SearchInput from "../input/SearchInput";
-import { ArrowUpLeft, Close, History, Movie, TV } from "@/utils/icons";
-import { Button, Listbox, ListboxItem } from "@heroui/react";
 import { useDebouncedValue, useLocalStorage } from "@mantine/hooks";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
@@ -96,7 +77,7 @@ const NavbarSearch: React.FC = () => {
     <div ref={wrapperRef} className="relative w-full">
       <form onSubmit={handleSubmit}>
         <SearchInput
-          placeholder={`Tim kiem ${content === "movie" ? "phim" : "TV series"}...`}
+          placeholder={`Tìm kiếm ${content === "movie" ? "phim" : "TV series"}...`}
           isLoading={isFetching}
           value={searchQuery}
           onValueChange={(val) => setSearchQuery(val)}
@@ -116,7 +97,7 @@ const NavbarSearch: React.FC = () => {
           >
             <Listbox
               variant="flat"
-              aria-label="Goi y tim kiem"
+              aria-label="Gợi ý tìm kiếm"
               className="bg-content1 rounded-medium w-full shadow-2xl"
               classNames={{ list: "max-h-[15rem] overflow-y-auto" }}
             >
@@ -229,7 +210,7 @@ const TopNavbar = () => {
             <Link href="/search" className="w-full">
               <SearchInput
                 className="pointer-events-none"
-                placeholder="Tim kiem phim yeu thich..."
+                placeholder="Tìm kiếm phim yêu thích..."
               />
             </Link>
           </NavbarItem>
