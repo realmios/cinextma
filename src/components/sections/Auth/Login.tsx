@@ -1,8 +1,10 @@
+"use client";
+
 import { signIn } from "@/actions/auth";
 import PasswordInput from "@/components/ui/input/PasswordInput";
 import { LoginFormSchema } from "@/schemas/auth";
 import { isEmpty } from "@/utils/helpers";
-import { Google, LockPassword, Mail } from "@/utils/icons";
+import { LockPassword, Mail } from "@/utils/icons";
 import { addToast, Button, Divider, Input, Link } from "@heroui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Turnstile } from "@marsidev/react-turnstile";
@@ -40,7 +42,7 @@ const AuthLoginForm: React.FC<AuthFormProps> = ({ setForm }) => {
     const { success, message } = await signIn(data);
 
     addToast({
-      title: message,
+      title: success ? "Đăng nhập thành công! Chào mừng trở lại 👋" : message,
       color: success ? "success" : "danger",
     });
 
@@ -63,24 +65,24 @@ const AuthLoginForm: React.FC<AuthFormProps> = ({ setForm }) => {
   );
 
   const getButtonText = useCallback(() => {
-    if (isSubmitting) return "Signing In...";
-    if (isVerifying) return "Verifying...";
-    return "Sign In";
+    if (isSubmitting) return "Đang đăng nhập...";
+    if (isVerifying) return "Đang xác minh...";
+    return "Đăng nhập";
   }, [isSubmitting, isVerifying]);
 
   return (
     <div className="flex flex-col gap-5">
       <form className="flex flex-col gap-3" onSubmit={onSubmit}>
         <p className="text-small text-foreground-500 mb-4 text-center">
-          Sign in to continue your streaming journey
+          Đăng nhập để tiếp tục hành trình xem phim của bạn 🎬
         </p>
         <Input
           {...register("email")}
           isInvalid={!!errors.email?.message}
           errorMessage={errors.email?.message}
           isRequired
-          label="Email Address"
-          placeholder="Enter your email"
+          label="Email"
+          placeholder="Nhập email của bạn"
           type="email"
           variant="underlined"
           startContent={<Mail className="text-xl" />}
@@ -92,8 +94,8 @@ const AuthLoginForm: React.FC<AuthFormProps> = ({ setForm }) => {
           errorMessage={errors.loginPassword?.message}
           isRequired
           variant="underlined"
-          label="Password"
-          placeholder="Enter your password"
+          label="Mật khẩu"
+          placeholder="Nhập mật khẩu"
           startContent={<LockPassword className="text-xl" />}
           isDisabled={isSubmitting || isVerifying}
         />
@@ -104,7 +106,7 @@ const AuthLoginForm: React.FC<AuthFormProps> = ({ setForm }) => {
             onClick={() => setForm("forgot")}
             isDisabled={isSubmitting || isVerifying}
           >
-            Forgot password?
+            Quên mật khẩu?
           </Link>
         </div>
         {isVerifying && (
@@ -126,12 +128,12 @@ const AuthLoginForm: React.FC<AuthFormProps> = ({ setForm }) => {
       </form>
       <div className="flex items-center gap-4">
         <Divider className="flex-1" />
-        <p className="text-tiny text-default-500 shrink-0">OR</p>
+        <p className="text-tiny text-default-500 shrink-0">HOẶC</p>
         <Divider className="flex-1" />
       </div>
       <GoogleLoginButton isDisabled={isSubmitting || isVerifying} />
       <p className="text-small text-center">
-        Don't have an account?
+        Chưa có tài khoản?{" "}
         <Link
           isBlock
           size="sm"
@@ -139,7 +141,7 @@ const AuthLoginForm: React.FC<AuthFormProps> = ({ setForm }) => {
           onClick={() => setForm("register")}
           isDisabled={isSubmitting || isVerifying}
         >
-          Sign Up
+          Đăng ký ngay
         </Link>
       </p>
     </div>
