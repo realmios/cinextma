@@ -9,6 +9,7 @@ export type SearchSuggestion = {
   id: number;
   title: string;
   type: "movie" | "tv";
+  poster_path: string | null;
 };
 
 export const getSearchSuggestions = async (
@@ -22,36 +23,46 @@ export const getSearchSuggestions = async (
 
     const supabase = await createClient();
 
-    // Lấy tất cả media đã upload có metadata
-    const { data, error } = await (supabase as any)
+    const { data: metaRows, error } = await (supabase as any)
       .from("media_metadata")
       .select("media_id, type, title")
       .ilike("title", `%${query}%`)
       .limit(limit);
 
     if (error) throw error;
-
-    if (!data || data.length === 0) {
+    if (!metaRows || metaRows.length === 0) {
       return { success: true, message: "No search suggestions", data: null };
     }
 
-    const suggestions: SearchSuggestion[] = data.map((item: any) => ({
-      id: item.media_id,
-      title: item.title,
-      type: item.type,
-    }));
+    const results = await Promise.allSettled(
+      metaRows.map(async (row: any) => {
+        try {
+          const detail = row.type === "movie"
+            ? await tmdb.movies.details(row.media_id)
+            : await tmdb.tvShows.details(row.media_id);
+          return {
+            id: row.media_id,
+            title: row.title,
+            type: row.type,
+            poster_path: detail.poster_path ?? null,
+          } as SearchSuggestion;
+        } catch {
+          return {
+            id: row.media_id,
+            title: row.title,
+            type: row.type,
+            poster_path: null,
+          } as SearchSuggestion;
+        }
+      })
+    );
 
-    return {
-      success: true,
-      message: "Search suggestions fetched",
-      data: suggestions,
-    };
+    const suggestions = results
+      .filter((r) => r.status === "fulfilled")
+      .map((r) => (r as PromiseFulfilledResult<SearchSuggestion>).value);
+
+    return { success: true, message: "Search suggestions fetched", data: suggestions };
   } catch (error) {
-    console.error("Search suggestions error:", error);
-    return {
-      success: false,
-      message: "Error fetching search suggestions",
-      data: null,
-    };
+    return { success: false, message: "Error fetching search suggestions", data: null };
   }
 };

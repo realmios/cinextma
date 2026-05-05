@@ -26,7 +26,6 @@ import Highlight from "../other/Highlight";
 import useBreakpoints from "@/hooks/useBreakpoints";
 import useDiscoverFilters from "@/hooks/useDiscoverFilters";
 
-// Mini search với dropdown — dùng trong navbar
 const NavbarSearch: React.FC = () => {
   const router = useRouter();
   const { mobile } = useBreakpoints();
@@ -53,7 +52,6 @@ const NavbarSearch: React.FC = () => {
   const showHistory = focused && !showSuggestions && !isEmpty(searchHistories) && isEmpty(searchQuery);
   const showDropdown = showSuggestions || showHistory;
 
-  // Đóng dropdown khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
@@ -120,13 +118,24 @@ const NavbarSearch: React.FC = () => {
                     {history}
                   </ListboxItem>
                 ))}
-                {showSuggestions && (data?.data || []).map(({ id, title, type }, index) => (
+                {showSuggestions && (data?.data || []).map(({ id, title, type, poster_path }, index) => (
                   <ListboxItem
                     key={`suggestion-${index}`}
                     className="text-start"
-                    startContent={type === "movie"
-                      ? <Movie className="text-primary" />
-                      : <TV className="text-warning" />
+                    startContent={
+                      <div className="flex items-center gap-2 shrink-0">
+                        {poster_path ? (
+                          <img
+                            src={`https://image.tmdb.org/t/p/w92${poster_path}`}
+                            alt={title}
+                            className="h-10 w-7 rounded object-cover"
+                          />
+                        ) : (
+                          type === "movie"
+                            ? <Movie className="text-primary" />
+                            : <TV className="text-warning" />
+                        )}
+                      </div>
                     }
                     endContent={
                       <Button isIconOnly variant="light" size="sm" className="size-6"
@@ -179,46 +188,4 @@ const TopNavbar = () => {
     >
       {!show && (
         <div
-          className="border-background bg-background absolute inset-0 h-full w-full border-b"
-          style={{ opacity: opacity }}
-        />
-      )}
-      <NavbarBrand>
-        {show ? <BrandLogo /> : <BackButton href={tv ? "/?content=tv" : "/"} />}
-      </NavbarBrand>
-
-      {/* Search với dropdown — hiện ở tất cả trang trừ /search */}
-      {show && !isSearchPage && (
-        <NavbarContent className="hidden w-full max-w-lg gap-2 md:flex" justify="center">
-          <NavbarItem className="w-full">
-            <NavbarSearch />
-          </NavbarItem>
-        </NavbarContent>
-      )}
-
-      {/* Trang /search giữ nguyên link cũ */}
-      {show && isSearchPage && (
-        <NavbarContent className="hidden w-full max-w-lg gap-2 md:flex" justify="center">
-          <NavbarItem className="w-full">
-            <Link href="/search" className="w-full">
-              <SearchInput
-                className="pointer-events-none"
-                placeholder="Tìm kiếm phim yêu thích..."
-              />
-            </Link>
-          </NavbarItem>
-        </NavbarContent>
-      )}
-
-      <NavbarContent justify="end">
-        <NavbarItem className="flex gap-1">
-          <ThemeSwitchDropdown />
-          <FullscreenToggleButton />
-          <UserProfileButton />
-        </NavbarItem>
-      </NavbarContent>
-    </Navbar>
-  );
-};
-
-export default TopNavbar;
+          className="border-background bg-background absolute inset-0 h-

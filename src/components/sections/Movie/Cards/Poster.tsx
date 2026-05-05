@@ -51,7 +51,7 @@ const MoviePosterCard: React.FC<MoviePosterCardProps> = ({ movie, variant = "ful
       >
         <Link href={`/movie/${movie.id}`} ref={ref} {...longPress()}>
           {variant === "full" && (
-            <div className="group motion-preset-focus relative aspect-2/3 overflow-hidden rounded-lg border-[3px] border-transparent text-white transition-colors hover:border-primary">
+            <div className="group motion-preset-focus relative aspect-[2/3] overflow-hidden rounded-lg border-[3px] border-transparent text-white transition-colors hover:border-primary">
               {hovered && (
                 <Icon
                   icon="line-md:play-filled"
@@ -82,7 +82,7 @@ const MoviePosterCard: React.FC<MoviePosterCardProps> = ({ movie, variant = "ful
                 alt={title}
                 src={posterImage}
                 radius="none"
-                className="z-0 aspect-2/3 h-[250px] object-cover object-center transition group-hover:scale-110 md:h-[300px]"
+                className="z-0 aspect-[2/3] h-[250px] object-cover object-center transition group-hover:scale-110 md:h-[300px]"
                 classNames={{
                   img: "group-hover:opacity-70",
                 }}
@@ -121,7 +121,7 @@ const MoviePosterCard: React.FC<MoviePosterCardProps> = ({ movie, variant = "ful
                     <Image
                       isBlurred
                       alt={title}
-                      className="aspect-2/3 rounded-lg object-cover object-center group-hover:scale-110"
+                      className="aspect-[2/3] rounded-lg object-cover object-center group-hover:scale-110"
                       src={posterImage}
                     />
                   </div>
