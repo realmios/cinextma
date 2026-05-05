@@ -55,7 +55,7 @@ const UserProfileButton: React.FC = () => {
   if (isLoading) return null;
 
   const guest = !user;
-  const avatar = `${env.NEXT_PUBLIC_AVATAR_PROVIDER_URL}${user?.email}`;
+  const avatar = user?.user_metadata?.avatar_url || `${env.NEXT_PUBLIC_AVATAR_PROVIDER_URL}${user?.email}`;
 
   const ProfileButton = (
     <Button
