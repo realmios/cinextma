@@ -1,13 +1,13 @@
-import { Poppins as FontPoppins, Saira as FontSaira } from "next/font/google";
+import { Be_Vietnam_Pro as FontBeVietnamPro } from "next/font/google";
 
-export const Poppins = FontPoppins({
-  subsets: ["latin"],
+export const Poppins = FontBeVietnamPro({
+  subsets: ["latin", "vietnamese"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-poppins",
 });
 
-export const Saira = FontSaira({
-  subsets: ["latin"],
+export const Saira = FontBeVietnamPro({
+  subsets: ["latin", "vietnamese"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-saira",
 });
