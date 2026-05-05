@@ -1,4 +1,4 @@
-import { FaGithub } from "react-icons/fa6";
+import { FaFacebook } from "react-icons/fa6";
 import { siteConfig } from "@/config/site";
 import Link from "next/link";
 import { Metadata } from "next/dist/lib/metadata/types/metadata-interface";
@@ -19,7 +19,7 @@ const AboutPage: NextPage = () => {
           <FAQ />
         </Suspense>
         <Link target="_blank" href={siteConfig.socials.github} className="flex justify-center">
-          <FaGithub size={30} />
+          <FaFacebook size={30} />
         </Link>
       </div>
     </div>

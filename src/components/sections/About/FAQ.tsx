@@ -5,48 +5,46 @@ import { Accordion, AccordionItem, Link } from "@heroui/react";
 
 const FAQS = [
   {
-    title: "🤔 What is Cinextma?",
+    title: "🤔 Suutamanime là gì?",
     description:
-      "Just like every other website, Cinextma is also a streaming site that helps to easily access all the TV shows and movies we wanted, without spending hours searching for them.",
+      "Suutamanime là trang web xem phim và chương trình TV miễn phí, giúp bạn dễ dàng truy cập tất cả các bộ phim và series yêu thích mà không cần mất hàng giờ tìm kiếm.",
   },
   {
-    title: "❓ So what do we actually do?",
+    title: "❓ Chúng tôi làm gì?",
     description:
-      "Well, let me tell you what we don’t do: we definitely don’t illegally host our files. We do not store any copyright-protected content on our website. Any linked content is stored only in third-party websites. This is a promotional website only. All files placed here are for introducing purpose. We highly ENCOURAGE users to BUY the CDs or DVDs of the movie or the music they like.",
+      "Chúng tôi không lưu trữ bất kỳ nội dung nào có bản quyền trên máy chủ của mình. Tất cả các liên kết video đều được lưu trữ trên các trang web bên thứ ba. Đây là trang web giới thiệu. Chúng tôi khuyến khích người dùng mua DVD hoặc đăng ký các dịch vụ streaming hợp pháp để ủng hộ nhà sản xuất.",
   },
   {
-    title: "🚫 I cannot watch video because of ads",
+    title: "🚫 Tôi không xem được video vì quảng cáo",
     description: (
       <p>
-        We are very sorry that we can't help you with that. We have no control in the ads being
-        served. Don't download anything in the popups. If you don't want to be annoyed. We highly
-        recommend subscribing to a legal streaming service that you can afford (or use an adblocker
-        like{" "}
+        Chúng tôi rất tiếc vì không thể kiểm soát các quảng cáo xuất hiện. Đừng tải bất kỳ thứ gì
+        từ các popup. Nếu bạn không muốn bị làm phiền, hãy sử dụng tiện ích chặn quảng cáo như{" "}
         <Link href="https://ublockorigin.com/" target="_blank" className="font-bold">
           uBlock Origin
         </Link>{" "}
-        or{" "}
+        hoặc{" "}
         <Link href="https://adblockplus.org/" target="_blank" className="font-bold">
           Adblock Plus
         </Link>
-        ).
+        .
       </p>
     ),
   },
   {
-    title: "🐌 Streaming speed is slow or all videos do not play",
+    title: "🐌 Video phát chậm hoặc không phát được",
     description:
-      "When you go on the page with the episode, in 99% of the cases there is a video player. What you have to do is click the Play button, of course. If it does not work (Don’t be judgmental! Everybody makes mistakes!), just click on the Servers you see on the top right of your device. You will get a list of servers [Vidlink, VidSrc etc.] Try choosing different server, it will definitely solve the problem.",
+      "Khi vào trang xem phim, hãy nhấn nút Play. Nếu không hoạt động, hãy thử chuyển sang server khác bằng cách nhấn vào các tùy chọn server ở góc trên bên phải. Mỗi server có tốc độ khác nhau, hãy thử lần lượt để tìm server phù hợp nhất với kết nối của bạn.",
   },
   {
-    title: "😁 I want to download video",
+    title: "😁 Tôi muốn tải video về",
     description:
-      "Since we don't store any files, so we don't have any download feature here. All files found on this site have been collected from various sources across the web and are believed to be in the public domain.",
+      "Vì chúng tôi không lưu trữ bất kỳ tệp nào trên máy chủ, nên chúng tôi không có tính năng tải xuống. Tất cả các video đều được liên kết từ các nguồn bên thứ ba.",
   },
   {
-    title: "😟 Is it safe to stream in this website?",
+    title: "😟 Trang web này có an toàn không?",
     description:
-      "This website is undoubtedly safer to stream, however downloading, uploading is illegal. You will not get into any trouble while using our website. It's highly not recommended to download the files and share them to the public, It might get you in trouble.",
+      "Trang web này hoàn toàn an toàn để xem phim trực tuyến. Bạn sẽ không gặp bất kỳ rắc rối nào khi sử dụng trang web của chúng tôi. Tuy nhiên, việc tải xuống và chia sẻ nội dung có bản quyền là vi phạm pháp luật và không được khuyến khích.",
   },
 ];
 

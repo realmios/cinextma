@@ -6,9 +6,7 @@ import { RegisterFormSchema } from "@/schemas/auth";
 import PasswordInput from "@/components/ui/input/PasswordInput";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Turnstile } from "@marsidev/react-turnstile";
 import { useCallback, useState } from "react";
-import { isEmpty } from "@/utils/helpers";
 import { env } from "@/utils/env";
 import GoogleLoginButton from "@/components/ui/button/GoogleLoginButton";
 
@@ -33,11 +31,6 @@ const AuthRegisterForm: React.FC<AuthFormProps> = ({ setForm }) => {
   });
 
   const onSubmit = handleSubmit(async (data) => {
-    if (isEmpty(data.captchaToken)) {
-      setIsVerifying(true);
-      return;
-    }
-
     const { success, message } = await signUp(data);
 
     if (!success) {
@@ -51,15 +44,6 @@ const AuthRegisterForm: React.FC<AuthFormProps> = ({ setForm }) => {
       timeout: success ? Infinity : undefined,
     });
   });
-
-  const onCaptchaSuccess = useCallback(
-    (token: string) => {
-      setValue("captchaToken", token);
-      setIsVerifying(false);
-      onSubmit();
-    },
-    [setValue, setIsVerifying, onSubmit],
-  );
 
   const getButtonText = useCallback(() => {
     if (isSubmitting) return "Signing Up...";
@@ -119,13 +103,6 @@ const AuthRegisterForm: React.FC<AuthFormProps> = ({ setForm }) => {
           startContent={<LockPassword className="text-xl" />}
           isDisabled={isSubmitting || isVerifying}
         />
-        {isVerifying && (
-          <Turnstile
-            className="flex h-fit w-full items-center justify-center"
-            siteKey={env.NEXT_PUBLIC_CAPTCHA_SITE_KEY ?? ""}
-            onSuccess={onCaptchaSuccess}
-          />
-        )}
         <Button
           className="mt-3 w-full"
           color="primary"
