@@ -5,10 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { addToast, Button } from "@heroui/react";
 import { useCallback } from "react";
 
-type GoogleLoginButtonProps = Omit
-  React.ComponentProps<typeof Button>,
-  "children" | "startContent" | "onPress"
->;
+type GoogleLoginButtonProps = Omit<React.ComponentProps<typeof Button>, "children" | "startContent" | "onPress">;
 
 const supabase = createClient();
 
@@ -26,10 +23,7 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ variant = "faded"
         },
       });
       if (error) {
-        addToast({
-          title: error.message,
-          color: "danger",
-        });
+        addToast({ title: error.message, color: "danger" });
       }
     } catch (error) {
       console.error("Google login error:", error);
@@ -41,12 +35,7 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ variant = "faded"
   }, []);
 
   return (
-    <Button
-      startContent={<Google width={24} />}
-      onPress={handleGoogleLogin}
-      variant={variant}
-      {...props}
-    >
+    <Button startContent={<Google width={24} />} onPress={handleGoogleLogin} variant={variant} {...props}>
       Continue with Google
     </Button>
   );
