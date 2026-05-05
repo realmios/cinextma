@@ -17,38 +17,37 @@ import { cn } from "@/utils/helpers";
 const COUNTDOWN_DURATION = 10;
 const MODAL_SIZE = "3xl";
 const DISCLAIMER_CONTENT = {
-  title: "Disclaimer",
+  title: "Chào mừng đến với Suutamanime! 🎬",
   paragraphs: [
     {
       id: "welcome",
       content:
-        "Welcome to Cinextma - a free and open-source movie streaming website. Please read this disclaimer carefully before using this website.",
+        "Suutamanime là trang web xem phim cá nhân của Hải — được tạo ra để sưu tầm và chia sẻ những bộ anime, phim và TV show yêu thích. Chúc mọi người xem phim vui vẻ! 🍿",
     },
     {
       id: "purpose",
-      content: "Cinextma is developed solely for",
-      emphasis: "educational and learning purposes.",
+      content: "Đây là dự án cá nhân phi lợi nhuận,",
+      emphasis: "không nhằm mục đích thương mại.",
       continuation:
-        "This website is an open-source project intended to demonstrate web development skills and is not meant to promote or encourage digital piracy in any form.",
+        "Toàn bộ nội dung được sưu tầm từ các nguồn có sẵn trên internet và chỉ phục vụ mục đích giải trí cá nhân.",
     },
     {
       id: "content-source",
       content:
-        "All content displayed on Cinextma (including but not limited to movies, images, posters, and related information) is sourced from",
-      emphasis: "third-party providers through APIs or embedding.",
+        "Thông tin phim (poster, mô tả, đánh giá...) được lấy từ",
+      emphasis: "The Movie Database (TMDB).",
       continuation:
-        "I do not host, store, or distribute any media files on my servers. The website merely aggregates content that is already available on the internet.",
+        "Trang web không lưu trữ hay phân phối bất kỳ file media nào trên máy chủ của mình.",
     },
     {
       id: "responsibility",
       content:
-        "By using Cinextma, you acknowledge that I bears no responsibility for user actions, content accuracy, or any direct or indirect damages arising from the use of this website. Users are solely responsible for their actions while using this service. I respect intellectual property rights and will respond to legitimate requests from copyright holders for content removal.",
+        "Bằng cách sử dụng Suutamanime, bạn đồng ý rằng mọi nội dung chỉ dành cho mục đích xem cá nhân. Nếu có bất kỳ vấn đề nào về bản quyền, vui lòng liên hệ để được xử lý kịp thời.",
     },
     {
       id: "usage",
       content:
-        "This website should only be used for learning purposes. Any illegal activities, including but not limited to unauthorized downloading, redistribution of content, or commercial use, are strictly prohibited. By using Cinextma, you agree to these terms and acknowledge that",
-      emphasis: "you use the service at your own risk.",
+        "Chúc bạn có những giờ phút giải trí thật vui vẻ và thoải mái cùng Suutamanime! Mọi phản hồi và góp ý đều được chào đón. Cảm ơn bạn đã ghé thăm! ❤️",
     },
   ],
 };
@@ -95,7 +94,7 @@ const Disclaimer: React.FC = () => {
 
   const isButtonDisabled = secondsRemaining > 0;
   const buttonText = useMemo(
-    () => `Agree${isButtonDisabled ? ` (${secondsRemaining})` : ""}`,
+    () => `Đồng ý${isButtonDisabled ? ` (${secondsRemaining})` : ""}`,
     [isButtonDisabled, secondsRemaining],
   );
 
@@ -119,7 +118,7 @@ const Disclaimer: React.FC = () => {
       scrollBehavior="inside"
     >
       <ModalContent>
-        <ModalHeader className="flex flex-col gap-1 text-center text-3xl uppercase">
+        <ModalHeader className="flex flex-col gap-1 text-center text-2xl">
           {DISCLAIMER_CONTENT.title}
         </ModalHeader>
 
