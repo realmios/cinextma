@@ -72,10 +72,15 @@ export const GET = async (request: Request) => {
         }
       }
 
+      const forwardedHost = request.headers.get("x-forwarded-host");
+      const forwardedProto = request.headers.get("x-forwarded-proto") ?? "https";
+
       if (IS_DEVELOPMENT) {
         return NextResponse.redirect(`${origin}${next}`);
+      } else if (forwardedHost) {
+        return NextResponse.redirect(`${forwardedProto}://${forwardedHost}${next}`);
       } else {
-        return NextResponse.redirect(`https://suutamanime.vercel.app${next}`);
+        return NextResponse.redirect(`${origin}${next}`);
       }
     }
   }
