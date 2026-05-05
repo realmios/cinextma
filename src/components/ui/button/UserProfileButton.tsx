@@ -55,7 +55,8 @@ const UserProfileButton: React.FC = () => {
   if (isLoading) return null;
 
   const guest = !user;
-  const avatar = user?.user_metadata?.avatar_url || `${env.NEXT_PUBLIC_AVATAR_PROVIDER_URL}${user?.email}`;
+  const avatar = user?.user_metadata?.avatar_url || 
+  `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(user?.username ?? user?.email ?? "user")}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
 
   const ProfileButton = (
     <Button
