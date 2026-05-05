@@ -16,39 +16,24 @@ const fetchUser = async (): Promise<AuthUserData | null> => {
 
   const supabase = createClient();
 
-  const { data: sessionData } = await supabase.auth.getSession();
-  if (!sessionData.session) return null;
-
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser();
 
-  if (error) {
-    console.error("Error fetching user:", error.message);
+  if (error || !user) return null;
 
-    addToast({
-      title: "Error fetching user",
-      description: error.message,
-      color: "danger",
-    });
+  const { data: username } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", user.id)
+    .single();
 
-    return null;
-  }
-
-  if (user) {
-    const { data: username } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", user.id)
-      .single();
-
-    if (username) {
-      AuthUser = {
-        ...user,
-        username: username.username,
-      };
-    }
+  if (username) {
+    AuthUser = {
+      ...user,
+      username: username.username,
+    };
   }
 
   return AuthUser;
@@ -60,7 +45,7 @@ const useSupabaseUser = () => {
   const query = useQuery({
     queryKey: ["supabase-user"],
     queryFn: fetchUser,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });
 
