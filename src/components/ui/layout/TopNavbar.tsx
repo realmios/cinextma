@@ -1,3 +1,22 @@
+﻿"use client";
+
+import BackButton from "@/components/ui/button/BackButton";
+import { siteConfig } from "@/config/site";
+import { cn } from "@/utils/helpers";
+import { Navbar, NavbarBrand, NavbarContent, NavbarItem } from "@heroui/react";
+import { useWindowScroll } from "@mantine/hooks";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import FullscreenToggleButton from "../button/FullscreenToggleButton";
+import UserProfileButton from "../button/UserProfileButton";
+import ThemeSwitchDropdown from "../input/ThemeSwitchDropdown";
+import BrandLogo from "../other/BrandLogo";
+import { getSearchSuggestions } from "@/actions/search";
+import SearchInput from "../input/SearchInput";
+import { ArrowUpLeft, Close, History, Movie, TV } from "@/utils/icons";
+import { Button, Listbox, ListboxItem } from "@heroui/react";
+import { useD
+@'
 "use client";
 
 import BackButton from "@/components/ui/button/BackButton";
@@ -13,7 +32,7 @@ import ThemeSwitchDropdown from "../input/ThemeSwitchDropdown";
 import BrandLogo from "../other/BrandLogo";
 import { getSearchSuggestions } from "@/actions/search";
 import SearchInput from "../input/SearchInput";
-import { ArrowUpLeft, Close, History, Movie, Search, TV } from "@/utils/icons";
+import { ArrowUpLeft, Close, History, Movie, TV } from "@/utils/icons";
 import { Button, Listbox, ListboxItem } from "@heroui/react";
 import { useDebouncedValue, useLocalStorage } from "@mantine/hooks";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -77,7 +96,7 @@ const NavbarSearch: React.FC = () => {
     <div ref={wrapperRef} className="relative w-full">
       <form onSubmit={handleSubmit}>
         <SearchInput
-          placeholder={`Tìm kiếm ${content === "movie" ? "phim" : "TV series"}...`}
+          placeholder={`Tim kiem ${content === "movie" ? "phim" : "TV series"}...`}
           isLoading={isFetching}
           value={searchQuery}
           onValueChange={(val) => setSearchQuery(val)}
@@ -97,7 +116,7 @@ const NavbarSearch: React.FC = () => {
           >
             <Listbox
               variant="flat"
-              aria-label="Gợi ý tìm kiếm"
+              aria-label="Goi y tim kiem"
               className="bg-content1 rounded-medium w-full shadow-2xl"
               classNames={{ list: "max-h-[15rem] overflow-y-auto" }}
             >
@@ -188,4 +207,44 @@ const TopNavbar = () => {
     >
       {!show && (
         <div
-          className="border-background bg-background absolute inset-0 h-
+          className="border-background bg-background absolute inset-0 h-full w-full border-b"
+          style={{ opacity: opacity }}
+        />
+      )}
+      <NavbarBrand>
+        {show ? <BrandLogo /> : <BackButton href={tv ? "/?content=tv" : "/"} />}
+      </NavbarBrand>
+
+      {show && !isSearchPage && (
+        <NavbarContent className="hidden w-full max-w-lg gap-2 md:flex" justify="center">
+          <NavbarItem className="w-full">
+            <NavbarSearch />
+          </NavbarItem>
+        </NavbarContent>
+      )}
+
+      {show && isSearchPage && (
+        <NavbarContent className="hidden w-full max-w-lg gap-2 md:flex" justify="center">
+          <NavbarItem className="w-full">
+            <Link href="/search" className="w-full">
+              <SearchInput
+                className="pointer-events-none"
+                placeholder="Tim kiem phim yeu thich..."
+              />
+            </Link>
+          </NavbarItem>
+        </NavbarContent>
+      )}
+
+      <NavbarContent justify="end">
+        <NavbarItem className="flex gap-1">
+          <ThemeSwitchDropdown />
+          <FullscreenToggleButton />
+          <UserProfileButton />
+        </NavbarItem>
+      </NavbarContent>
+    </Navbar>
+  );
+};
+
+export default TopNavbar;
