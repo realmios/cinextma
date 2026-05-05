@@ -16,7 +16,7 @@ import { TbFolder, TbFolderFilled } from "react-icons/tb";
 export const siteConfig: SiteConfigType = {
   name: "Suutamanime",
   description: "Website sưu tầm anime, và phim hoạt hình tuổi thơ miễn phí",
-  favicon: "/favicon.ico",
+  favicon: "/icons/android/android-launchericon-192-192.png",
   navItems: [
     {
       label: "Trang chủ",

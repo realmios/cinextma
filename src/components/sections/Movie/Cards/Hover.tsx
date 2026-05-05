@@ -10,12 +10,15 @@ import { Button, Chip, Image, Link, Spinner } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useQuery } from "@tanstack/react-query";
 import { Genre } from "tmdb-ts";
+import { useMediaInfo } from "@/hooks/useMediaTitle";
 
 const HoverPosterCard: React.FC<{ id: number; fullWidth?: boolean }> = ({ id, fullWidth }) => {
   const { data: movie, isPending } = useQuery({
     queryFn: () => tmdb.movies.details(id, ["images"]),
     queryKey: ["get-movie-detail-on-hover-poster", id],
   });
+
+  const { data: mediaInfo } = useMediaInfo(id, "movie");
 
   if (isPending) {
     return (
@@ -27,9 +30,9 @@ const HoverPosterCard: React.FC<{ id: number; fullWidth?: boolean }> = ({ id, fu
 
   if (!movie) return null;
 
-  const title = mutateMovieTitle(movie);
+  const fullTitle = mediaInfo?.title ?? mutateMovieTitle(movie);
+  const overview = mediaInfo?.overview ?? movie.overview;
   const releaseYear = movie.release_date ? new Date(movie.release_date).getFullYear() : undefined;
-  const fullTitle = title;
   const backdropImage = getImageUrl(movie.backdrop_path, "backdrop");
   const titleImage = getImageUrl(
     movie.images.logos.find((logo) => logo.iso_639_1 === "en")?.file_path,
@@ -72,20 +75,10 @@ const HoverPosterCard: React.FC<{ id: number; fullWidth?: boolean }> = ({ id, fu
           </div>
           <div className="flex flex-col gap-2 p-4 pt-[40%] *:z-10">
             <div className="flex gap-3">
-              <Chip
-                size="sm"
-                color="primary"
-                variant="faded"
-                className="md:text-md text-xs"
-                classNames={{ content: "font-bold" }}
-              >
+              <Chip size="sm" color="primary" variant="faded" className="md:text-md text-xs" classNames={{ content: "font-bold" }}>
                 Phim
               </Chip>
-              {movie.adult && (
-                <Chip size="sm" color="danger" variant="faded">
-                  18+
-                </Chip>
-              )}
+              {movie.adult && <Chip size="sm" color="danger" variant="faded">18+</Chip>}
             </div>
             <h4 className="text-xl font-bold">{fullTitle}</h4>
             <div className="md:text-md flex flex-wrap gap-1 text-xs *:z-10">
@@ -115,7 +108,7 @@ const HoverPosterCard: React.FC<{ id: number; fullWidth?: boolean }> = ({ id, fu
               </Button>
               <BookmarkButton data={bookmarkData} isTooltipDisabled />
             </div>
-            <p className="text-sm">{movie.overview}</p>
+            <p className="text-sm">{overview}</p>
           </div>
         </div>
       </div>

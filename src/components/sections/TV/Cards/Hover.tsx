@@ -8,12 +8,15 @@ import { useQuery } from "@tanstack/react-query";
 import Rating from "../../../ui/other/Rating";
 import { SavedMovieDetails } from "@/types/movie";
 import BookmarkButton from "@/components/ui/button/BookmarkButton";
+import { useMediaInfo } from "@/hooks/useMediaTitle";
 
 const TvShowHoverCard: React.FC<{ id: number; fullWidth?: boolean }> = ({ id, fullWidth }) => {
   const { data: tv, isPending } = useQuery({
     queryFn: () => tmdb.tvShows.details(id, ["images"]),
     queryKey: ["get-tv-detail-on-hover-poster", id],
   });
+
+  const { data: mediaInfo } = useMediaInfo(id, "tv");
 
   if (isPending) {
     return (
@@ -25,11 +28,11 @@ const TvShowHoverCard: React.FC<{ id: number; fullWidth?: boolean }> = ({ id, fu
 
   if (!tv) return null;
 
-  const title = mutateTvShowTitle(tv);
+  const fullTitle = mediaInfo?.title ?? mutateTvShowTitle(tv);
+  const overview = mediaInfo?.overview ?? tv.overview;
   const firstReleaseYear = new Date(tv.first_air_date).getFullYear();
   const lastReleaseYear = new Date(tv.last_air_date).getFullYear();
   const releaseYears = `${firstReleaseYear}${firstReleaseYear !== lastReleaseYear ? ` - ${lastReleaseYear}` : ""}`;
-  const fullTitle = title;
   const backdropImage = getImageUrl(tv.backdrop_path, "backdrop");
   const titleImage = getImageUrl(
     tv.images.logos.find((logo) => logo.iso_639_1 === "en")?.file_path,
@@ -70,29 +73,19 @@ const TvShowHoverCard: React.FC<{ id: number; fullWidth?: boolean }> = ({ id, fu
           />
         </div>
         <div className="flex flex-col gap-2 p-4 pt-[40%] *:z-10">
-          <Chip
-            color="warning"
-            size="sm"
-            variant="faded"
-            className="md:text-md text-xs"
-            classNames={{ content: "font-bold" }}
-          >
+          <Chip color="warning" size="sm" variant="faded" className="md:text-md text-xs" classNames={{ content: "font-bold" }}>
             TV Series
           </Chip>
           <h4 className="text-xl font-bold">{fullTitle}</h4>
           <div className="md:text-md flex flex-wrap gap-1 text-xs md:gap-2">
             <div className="flex items-center gap-1">
               <Season />
-              <span>
-                {tv.number_of_seasons} Mùa
-              </span>
+              <span>{tv.number_of_seasons} Mùa</span>
             </div>
             <p>&#8226;</p>
             <div className="flex items-center gap-1">
               <List />
-              <span>
-                {tv.number_of_episodes} Tập
-              </span>
+              <span>{tv.number_of_episodes} Tập</span>
             </div>
             <p>&#8226;</p>
             <div className="flex items-center gap-1">
@@ -116,7 +109,7 @@ const TvShowHoverCard: React.FC<{ id: number; fullWidth?: boolean }> = ({ id, fu
             </Button>
             <BookmarkButton data={bookmarkData} isTooltipDisabled />
           </div>
-          <p className="text-sm">{tv.overview}</p>
+          <p className="text-sm">{overview}</p>
         </div>
       </div>
     </div>
