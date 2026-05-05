@@ -38,15 +38,13 @@ const AdsWarning: React.FC = () => {
       scrollBehavior="inside"
     >
       <ModalContent>
-        <ModalHeader className="flex flex-col gap-1 text-center text-3xl uppercase">
-          Before you watch!
+        <ModalHeader className="flex flex-col gap-1 text-center text-2xl">
+          🍿 Trước khi xem phim
         </ModalHeader>
         <ModalBody>
           <ScrollShadow hideScrollBar className="space-y-4">
             <p className="text-center">
-              As our content is hosted by various third party providers, you may encounter pop up
-              advertisements while streaming. To improve your viewing experience, we suggest using
-              an ad-blocker like{" "}
+              Chúc bạn xem phim vui vẻ! Nếu gặp quảng cáo trong quá trình xem, bạn có thể cài{" "}
               <Link
                 showAnchorIcon
                 isExternal
@@ -57,7 +55,7 @@ const AdsWarning: React.FC = () => {
               >
                 uBlock Origin
               </Link>{" "}
-              or{" "}
+              hoặc{" "}
               <Link
                 showAnchorIcon
                 isExternal
@@ -67,15 +65,14 @@ const AdsWarning: React.FC = () => {
                 className="font-semibold"
               >
                 AdGuard
-              </Link>
-              . Please be aware that we don't have control over the ads displayed and cannot be held
-              responsible for their content or any issues they may cause.
+              </Link>{" "}
+              để chặn quảng cáo và có trải nghiệm xem phim tốt hơn. Cảm ơn bạn đã sử dụng Suutamanime! ❤️
             </p>
           </ScrollShadow>
         </ModalBody>
         <ModalFooter className="justify-center">
           <Button color="primary" variant="shadow" onPress={handleSeen}>
-            Okay, I understand
+            Đã hiểu, xem phim thôi!
           </Button>
         </ModalFooter>
       </ModalContent>

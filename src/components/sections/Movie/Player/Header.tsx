@@ -1,6 +1,12 @@
+"use client";
+
 import { cn } from "@/utils/helpers";
 import { ArrowLeft, Server } from "@/utils/icons";
 import ActionButton from "./ActionButton";
+import { useMediaInfo } from "@/hooks/useMediaTitle";
+import { mutateMovieTitle } from "@/utils/movies";
+import { useQuery } from "@tanstack/react-query";
+import { tmdb } from "@/api/tmdb";
 
 interface MoviePlayerHeaderProps {
   id: number;
@@ -15,6 +21,9 @@ const MoviePlayerHeader: React.FC<MoviePlayerHeaderProps> = ({
   hidden,
   onOpenSource,
 }) => {
+  const { data: mediaInfo } = useMediaInfo(id, "movie");
+  const displayName = mediaInfo?.title ?? movieName;
+
   return (
     <div
       aria-hidden={hidden ? true : undefined}
@@ -24,14 +33,14 @@ const MoviePlayerHeader: React.FC<MoviePlayerHeaderProps> = ({
         { "opacity-0": hidden },
       )}
     >
-      <ActionButton label="Back" href={`/movie/${id}`}>
+      <ActionButton label="Quay lại" href={`/movie/${id}`}>
         <ArrowLeft size={42} />
       </ActionButton>
       <div className="absolute left-1/2 hidden -translate-x-1/2 flex-col justify-center text-center sm:flex">
-        <p className="text-sm text-white text-shadow-lg sm:text-lg lg:text-xl">{movieName}</p>
+        <p className="text-sm text-white text-shadow-lg sm:text-lg lg:text-xl">{displayName}</p>
       </div>
       <div className="flex items-center gap-4">
-        <ActionButton label="Sources" tooltip="Sources" onClick={onOpenSource}>
+        <ActionButton label="Nguồn phim" tooltip="Nguồn phim" onClick={onOpenSource}>
           <Server size={34} />
         </ActionButton>
       </div>
