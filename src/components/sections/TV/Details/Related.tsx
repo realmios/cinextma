@@ -1,22 +1,31 @@
+"use client";
+
 import SectionTitle from "@/components/ui/other/SectionTitle";
 import { isEmpty } from "@/utils/helpers";
 import { Tab, Tabs } from "@heroui/react";
 import { AppendToResponse, TV, TvShowDetails } from "tmdb-ts/dist/types";
 import TvShowRelatedList from "./RelatedList";
+import { useUploadedMediaIds } from "@/hooks/useMediaTitle";
 
 interface TvShowRelatedSectionProps {
   tv: AppendToResponse<TvShowDetails, ("recommendations" | "similar")[], "tvShow">;
 }
 
 const TvShowRelatedSection: React.FC<TvShowRelatedSectionProps> = ({ tv }) => {
+  const { data: uploadedIds } = useUploadedMediaIds("tv");
+
   // @ts-expect-error: wrong type.
-  const recommendations = tv.recommendations.results as TV[];
-  const similar = tv.similar.results as TV[];
+  const recommendations = (tv.recommendations.results as TV[])
+    .filter((t) => uploadedIds?.has(t.id));
+  const similar = (tv.similar.results as TV[])
+    .filter((t) => uploadedIds?.has(t.id));
+
+  if (!uploadedIds) return null;
 
   return (
     <section id="related" className="z-3">
       <SectionTitle color="warning" className="mb-2 sm:mb-0 sm:translate-y-10">
-        You may like
+        Có thể bạn thích
       </SectionTitle>
       <Tabs
         aria-label="Related Section"
@@ -25,12 +34,12 @@ const TvShowRelatedSection: React.FC<TvShowRelatedSectionProps> = ({ tv }) => {
         classNames={{ cursor: "bg-warning h-1 rounded-full" }}
       >
         {!isEmpty(recommendations) && (
-          <Tab key="recommendations" title="Recommendations">
+          <Tab key="recommendations" title="Đề xuất">
             <TvShowRelatedList tvs={recommendations} />
           </Tab>
         )}
         {!isEmpty(similar) && (
-          <Tab key="similar" title="Similar">
+          <Tab key="similar" title="Tương tự">
             <TvShowRelatedList tvs={similar} />
           </Tab>
         )}

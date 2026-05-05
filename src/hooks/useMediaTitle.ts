@@ -42,3 +42,19 @@ export function useMediaInfo(mediaId: number, type: "movie" | "tv") {
     staleTime: 1000 * 60 * 10,
   });
 }
+export function useUploadedMediaIds(type: "movie" | "tv") {
+  const supabase = createClient();
+
+  return useQuery({
+    queryKey: ["uploaded-media-ids", type],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("streams")
+        .select("media_id")
+        .eq("type", type);
+      if (error) throw error;
+      return new Set(data?.map((s) => s.media_id) ?? []);
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+}
