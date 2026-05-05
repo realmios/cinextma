@@ -20,7 +20,6 @@ export const GET = async (request: Request) => {
     } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      // Insert username
       if (user) {
         console.info({ user });
 
@@ -31,18 +30,15 @@ export const GET = async (request: Request) => {
           .single();
 
         if (!profile) {
-          // Get base username dari Google
           const baseUsername =
             user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0];
 
-          // Function buat generate unique username
           const generateUniqueUsername = async (base: string) => {
             let username = base;
             let attempts = 0;
-            const maxAttempts = 5; // Prevent infinite loop
+            const maxAttempts = 5;
 
             while (attempts < maxAttempts) {
-              // Check if username exists
               const { data: existing } = await supabase
                 .from("profiles")
                 .select("username")
@@ -50,24 +46,19 @@ export const GET = async (request: Request) => {
                 .single();
 
               if (!existing) {
-                // Username available!
                 return username;
               }
 
-              // Username taken, add random 4 digits
-              const randomNum = Math.floor(1000 + Math.random() * 9000); // 1000-9999
+              const randomNum = Math.floor(1000 + Math.random() * 9000);
               username = `${base}#${randomNum}`;
               attempts++;
             }
 
-            // Fallback: use timestamp if still can't find unique
             return `${base}${Date.now()}`;
           };
 
-          // Generate unique username
           const uniqueUsername = await generateUniqueUsername(baseUsername);
 
-          // Insert profile with unique username
           const { error: profileError } = await supabase.from("profiles").insert({
             id: user.id,
             username: uniqueUsername,
@@ -81,14 +72,10 @@ export const GET = async (request: Request) => {
         }
       }
 
-      const forwardedHost = request.headers.get("x-forwarded-host"); // original origin before load balancer
-
       if (IS_DEVELOPMENT) {
-  return NextResponse.redirect(`${origin}${next}`);
-} else {
-  return NextResponse.redirect(`https://suutamanime.vercel.app${next}`);
-} else {
         return NextResponse.redirect(`${origin}${next}`);
+      } else {
+        return NextResponse.redirect(`https://suutamanime.vercel.app${next}`);
       }
     }
   }
